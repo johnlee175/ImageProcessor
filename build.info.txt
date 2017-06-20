@@ -1,0 +1,2 @@
+BuildType=debug
+BuildVersion=1.0.0

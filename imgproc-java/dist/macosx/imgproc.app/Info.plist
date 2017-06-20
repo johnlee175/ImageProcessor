@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<plist version="1.0">
+
+<dict>
+	<key>CFBundleName</key>
+		<string>imgproc</string>
+	<key>CFBundleDisplayName</key>
+    	<string>imgproc</string>
+    <key>CFBundleGetInfoString</key>
+		<string>imgproc for Mac OS X, Copyright johnsoft Corp. and others 2010, 2020. All rights reserved.</string>
+
+	<key>CFBundleIdentifier</key>
+		<string>com.johnsoft.imgproc</string>
+	<key>CFBundlePackageType</key>
+		<string>APPL</string>
+	<key>CFBundleExecutable</key>
+		<string>imgproc</string>
+	<key>CFBundleIconFile</key>
+		<string>app.icns</string>
+	
+	<key>CFBundleShortVersionString</key>
+		<string>1.0.0</string>
+	<key>CFBundleVersion</key>
+		<string>1.0.0</string>
+	<key>NSHighResolutionCapable</key>
+		<true/>
+	<key>CFBundleInfoDictionaryVersion</key>
+		<string>6.0</string>
+
+	<key>CFBundleDevelopmentRegion</key>
+		<string>English</string>
+	<key>CFBundleLocalizations</key>
+		<array>
+			<string>en</string>
+			<string>zh</string>
+		</array>
+
+  </dict>
+
+</plist>
