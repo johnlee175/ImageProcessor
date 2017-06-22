@@ -24,7 +24,7 @@ JNIEXPORT jintArray JNICALL Java_com_johnsoft_alg_BaseImageProc_grey(JNIEnv *env
     jint *pResult = (*env)->GetIntArrayElements(env, result, NULL);
     jint *pArgb = (*env)->GetIntArrayElements(env, argb, NULL);
 
-    calc_grey(pResult, pArgb, size);
+    calc_grey((int32_t *)pResult, (int32_t *)pArgb, size);
 
 
     (*env)->ReleaseIntArrayElements(env, argb, pArgb, 0);
@@ -41,7 +41,7 @@ JNIEXPORT jintArray JNICALL Java_com_johnsoft_alg_BaseImageProc_greyColor(JNIEnv
     jint *pResult = (*env)->GetIntArrayElements(env, result, NULL);
     jint *pArgb = (*env)->GetIntArrayElements(env, argb, NULL);
 
-    calc_greyColor(pResult, pArgb, size);
+    calc_greyColor((int32_t *)pResult, (int32_t *)pArgb, size);
 
 
     (*env)->ReleaseIntArrayElements(env, argb, pArgb, 0);
@@ -67,7 +67,7 @@ JNIEXPORT jintArray JNICALL Java_com_johnsoft_alg_BaseImageProc_greyFilter(JNIEn
     jint *pResult = (*env)->GetIntArrayElements(env, result, NULL);
     jint *pArgb = (*env)->GetIntArrayElements(env, argb, NULL);
 
-    calc_greyFilter(pResult, pArgb, size, gamma_filter);
+    calc_greyFilter((int32_t *)pResult, (int32_t *)pArgb, size, gamma_filter);
 
     (*env)->ReleaseIntArrayElements(env, argb, pArgb, 0);
     (*env)->ReleaseIntArrayElements(env, result, pResult, 0);
@@ -83,7 +83,7 @@ JNIEXPORT jintArray JNICALL Java_com_johnsoft_alg_BaseImageProc_colorFilter(JNIE
     jint *pResult = (*env)->GetIntArrayElements(env, result, NULL);
     jint *pArgb = (*env)->GetIntArrayElements(env, argb, NULL);
 
-    calc_colorFilter(pResult, pArgb, size, gamma_filter);
+    calc_colorFilter((int32_t *)pResult, (int32_t *)pArgb, size, gamma_filter);
 
     (*env)->ReleaseIntArrayElements(env, argb, pArgb, 0);
     (*env)->ReleaseIntArrayElements(env, result, pResult, 0);

@@ -2,7 +2,7 @@
 
 
 int32_t grey_to_greyColor(int32_t avg) {
-    if (avg > 255) avg = 255; if (avg < 0)  avg = 0; // not (avg & 0xFF)
+    if (avg > 255) { avg = 255; } if (avg < 0) { avg = 0; } // not (avg & 0xFF)
     return (255 << 24) + (avg << 16) + (avg << 8) + avg;
 }
 
@@ -47,9 +47,9 @@ void calc_colorFilter(int32_t *pResult, int32_t *pArgb, int32_t size, component_
         r = filter(r);
         g = filter(g);
         b = filter(b);
-        if (r > 255) r = 255; if (r < 0)  r = 0; // not (r & 0xFF)
-        if (g > 255) g = 255; if (g < 0)  g = 0; // not (g & 0xFF)
-        if (b > 255) b = 255; if (b < 0)  b = 0; // not (b & 0xFF)
+        if (r > 255) { r = 255; } if (r < 0) { r = 0; } // not (r & 0xFF)
+        if (g > 255) { g = 255; } if (g < 0) { g = 0; } // not (g & 0xFF)
+        if (b > 255) { b = 255; } if (b < 0) { b = 0; } // not (b & 0xFF)
         pResult[i] = (255 << 24) + (r << 16) + (g << 8) + b;
     }
 }
