@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 
-SHELL_DIR="$(cd $(dirname "$0"); pwd)"
-
-gradle clean
-rm -rf ${SHELL_DIR}/dist/linux/*.jar
-rm -rf ${SHELL_DIR}/dist/linux/libs
-rm -rf ${SHELL_DIR}/dist/linux/jniLibs
+cd "$(dirname "$0")"
+if [ $? -eq 0 ]; then
+    gradle clean
+    rm -rf dist/linux/*.jar
+    rm -rf dist/linux/libs
+    rm -rf dist/linux/jniLibs
+else
+    echo "cd current script directory failed"
+fi

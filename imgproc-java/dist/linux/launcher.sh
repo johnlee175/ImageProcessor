@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd $(dirname "$0")
+cd "$(dirname "$0")"
 
 # you can java-debug with 'jdb -attach 127.0.0.1:51230'
 # you can java-debug with Intellij IDEA Remote Debug Configurations, Socket, Attach, 51230 port

@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
 
-cd $(dirname "$0") \
-&& bash clean.linux.sh \
-&& rm -rf dist/macosx/imgproc.app/Contents/MacOS/*
+cd "$(dirname "$0")"
+if [ $? -eq 0 ]; then
+    source clean.linux.sh
+    RESULT_A=$?
+    rm -rf dist/macosx/imgproc.app/Contents/MacOS/*
+    RESULT_B=$?
 
-if [ $? -ne 0 ]; then
-    echo Press enter to continue; read dummy;
+    if [ ${RESULT_A} -ne 0 -o ${RESULT_B} -ne 0 ]; then
+        echo "Press enter to continue"; read dummy;
+    fi
+else
+    echo "cd current script directory failed"
+    echo "Press enter to continue"; read dummy;
 fi

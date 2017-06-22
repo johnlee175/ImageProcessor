@@ -36,11 +36,10 @@ if [ $# -gt 0 ]; then
     done
 fi
 
-SHELL_DIR="$(cd $(dirname "$0"); pwd)"
+SHELL_DIR="$(cd "$(dirname "$0")"; pwd)"
 BUILD_INFO="${SHELL_DIR}/../build.info.txt"
 
-if [ -f "${BUILD_INFO}" ]
-then
+if [ -f "${BUILD_INFO}" ]; then
   while IFS='=' read -r key value
   do
     eval "${key}='${value}'"
@@ -50,12 +49,17 @@ else
   exit 1;
 fi
 
+BuildType="${BuildType:-debug}"
 #export CC=/path/to/your/c/compiler
 #export CXX=/path/to/your/c++/compiler
-export PROJECT=imgproc
+export PROJECT='imgproc'
 export BUILD_TYPE="$(tr '[:lower:]' '[:upper:]' <<< ${BuildType:0:1})${BuildType:1}"
-export APP_VERSION=${BuildVersion}
+export APP_VERSION="${BuildVersion:-1.0.0}"
 export BUILD_DIR="${SHELL_DIR}/../${PROJECT}${BUILD_TYPE}-${APP_VERSION}-Build"
-echo "BUILD_DIR=${BUILD_DIR}"
-rm -rf "${BUILD_DIR}" && mkdir "${BUILD_DIR}"
-cd "${BUILD_DIR}" && cmake "${SHELL_DIR}" -G"${GPARAM}" && ${COMMANDS}
+echo "BUILD_DIR='${BUILD_DIR}'"
+
+rm -rf "${BUILD_DIR}" \
+&& mkdir "${BUILD_DIR}" \
+&& cd "${BUILD_DIR}" \
+&& cmake "${SHELL_DIR}" -G"${GPARAM}" \
+&& ${COMMANDS}
