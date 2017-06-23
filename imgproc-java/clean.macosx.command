@@ -2,7 +2,7 @@
 
 cd "$(dirname "$0")"
 if [ $? -eq 0 ]; then
-    source clean.linux.sh
+    . ./clean.linux.sh
     RESULT_A=$?
     rm -rf dist/macosx/imgproc.app/Contents/MacOS/*
     RESULT_B=$?

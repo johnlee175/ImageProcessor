@@ -18,7 +18,7 @@ if [ $? -eq 0 ]; then
     export BUILD_TYPE="$(tr '[:lower:]' '[:upper:]' <<< ${BuildType:0:1})${BuildType:1}"
     export APP_VERSION="${BuildVersion:-1.0.0}"
 
-    source clean.linux.sh \
+    . ./clean.linux.sh \
     && gradle assemble \
     && cp -r build/libs/*.jar dist/linux/ \
     && cp -r libs dist/linux/ \
