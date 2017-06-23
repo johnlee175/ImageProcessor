@@ -10,14 +10,20 @@ else
     DEBUG_PARAM=''
 fi
 
+PATH_SEPARATOR=':'
+JAVA_FILE_INFO="$(file "$(realpath "$(which java)")")"
+if [ $(expr "${JAVA_FILE_INFO}" : ".*Windows.*") -ne 0 ]; then
+    PATH_SEPARATOR=';'
+fi
+
 java \
 ${DEBUG_PARAM} \
 -Xmx2048M -Xms1024M \
--Dfile.encoding=UTF-8 \
--Djava.library.path=jniLibs \
--classpath imgproc-1.0.0.jar:libs/* \
+-Dfile.encoding="UTF-8" \
+-Djava.library.path="jniLibs" \
+-classpath "imgproc-1.0.0.jar${PATH_SEPARATOR}libs/*" \
 -Dsun.java2d.opengl=true \
--splash:splash.png \
+-splash:"splash.png" \
 com.johnsoft.MainLauncher
 
 
