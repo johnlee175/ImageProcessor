@@ -43,6 +43,7 @@ public class SwingMainWindow implements UiFace.MainWindow {
     private final MainFrame frame;
     private final SwingUiFace uiface;
 
+    @SuppressWarnings("unchecked")
     public SwingMainWindow(SwingUiFace uiFace) {
         frame = new MainFrame();
         uiface = uiFace;
@@ -92,13 +93,7 @@ public class SwingMainWindow implements UiFace.MainWindow {
 
             @Override
             public boolean canImport(TransferSupport support) {
-                if (!support.isDrop()) {
-                    return false;
-                }
-                if (support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                    return true;
-                }
-                return false;
+                return support.isDrop() && support.isDataFlavorSupported(DataFlavor.javaFileListFlavor);
             }
         });
     }

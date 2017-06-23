@@ -34,6 +34,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parame
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 
+# Make sure exists JAVA_HOME global environment variable, locate at valid JDK directory, and $JAVA_HOME/bin in $PATH
 find_package(JNI REQUIRED)
 include_directories(${JAVA_INCLUDE_PATH})
 include_directories(${JAVA_INCLUDE_PATH2})
