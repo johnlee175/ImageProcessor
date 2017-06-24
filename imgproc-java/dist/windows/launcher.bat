@@ -3,6 +3,18 @@
 REM cd %cd%
 REM cd %~dp0
 
+java -version > NUL 2>&1
+REM download and copy jre to this directory
+if not "%errorlevel%" == "0" (
+	pushd %~dp0
+	set SHELL_DIR="%CD%"
+	popd
+
+    set JAVA_BIN=%SHELL_DIR%\jre\bin\java.exe
+    echo "java not found, using built-in jre in %JAVA_BIN%"
+    doskey java=%JAVA_BIN% $*
+)
+
 set DEBUG_PARAM=
 set __DEBUG_PARAM__=-agentlib:jdwp=transport=dt_socket,address=127.0.0.1:51230,suspend=y,server=y
 

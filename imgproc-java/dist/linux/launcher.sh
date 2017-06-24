@@ -2,6 +2,13 @@
 
 cd "$(dirname "$0")"
 
+# download and copy jre to this directory
+if [ ! -x "$(command -v java)" ]; then
+    JAVA_BIN="$(pwd)/jre/bin/java"
+    echo "java not found, using built-in jre in ${JAVA_BIN}"
+    alias java=${JAVA_BIN}
+fi
+
 # you can java-debug with 'jdb -attach 127.0.0.1:51230'
 # you can java-debug with Intellij IDEA Remote Debug Configurations, Socket, Attach, 51230 port
 if [ "$1" == "debug" -o "$1" == "-debug" -o "$1" == "--debug" ]; then
