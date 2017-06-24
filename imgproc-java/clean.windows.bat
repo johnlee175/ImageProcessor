@@ -1,10 +1,8 @@
 @echo off
 
-pushd %~dp0
-set SHELL_DIR="%CD%"
-popd
+call gradle.bat clean
+del dist\windows\*.jar
+rmdir /s/q dist\windows\libs
+rmdir /s/q dist\windows\jniLibs
 
-gradle clean
-del "${SHELL_DIR}/dist/windows/*.jar"
-rmdir /s/q "${SHELL_DIR}/dist/windows/libs"
-rmdir /s/q "${SHELL_DIR}/dist/windows/jniLibs"
+if not "%1"=="quiet" pause
