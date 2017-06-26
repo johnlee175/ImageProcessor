@@ -67,7 +67,7 @@ public class SwingMainWindow implements UiFace.MainWindow {
                                     .javaFileListFlavor);
                             uiface.onReceiveFiles(files);
                         } catch (Exception ex) {
-                            ex.printStackTrace();
+                            DialogUtilities.showErrorMessageBox(ex);
                         }
                     }
                 }
@@ -86,7 +86,7 @@ public class SwingMainWindow implements UiFace.MainWindow {
                     uiface.onReceiveFiles(files);
                     return true;
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    DialogUtilities.showErrorMessageBox(e);
                     return false;
                 }
             }

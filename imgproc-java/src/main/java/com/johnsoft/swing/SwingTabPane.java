@@ -16,7 +16,23 @@
  */
 package com.johnsoft.swing;
 
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+import javax.swing.Icon;
 import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JMenuItem;
+import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JViewport;
@@ -47,7 +63,26 @@ public class SwingTabPane implements UiFace.TabPane {
         scrollPane.getViewport().setScrollMode(JViewport.BLIT_SCROLL_MODE);
         tabbedPane.putClientProperty(title, ui.getClientData());
         tabbedPane.addTab(title, scrollPane);
+        tabbedPane.setTabComponentAt(tabbedPane.getTabCount() - 1, tabComponent(title, null, title));
         return this;
+    }
+
+    @Override
+    public void closeTab(String title) {
+        final int count = tabbedPane.getTabCount();
+        for (int i = count - 1; i >= 0; --i) {
+            if (title.equals(tabbedPane.getTitleAt(i))) {
+                tabbedPane.removeTabAt(i);
+                break;
+            }
+        }
+    }
+
+    public void closeAllTabs() {
+        final int count = tabbedPane.getTabCount();
+        for (int i = count - 1; i >= 0; --i) {
+            tabbedPane.removeTabAt(i);
+        }
     }
 
     @Override
@@ -63,6 +98,100 @@ public class SwingTabPane implements UiFace.TabPane {
     @Override
     public Object getClientData() {
         return null;
+    }
+
+    private JComponent tabComponent(final String title, Icon icon, String tip) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setOpaque(false);
+        panel.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 1) {
+                    if (e.getButton() == MouseEvent.BUTTON1) {
+                        final int count = tabbedPane.getTabCount();
+                        for (int i = 0; i < count; ++i) {
+                            if (title.equals(tabbedPane.getTitleAt(i))) {
+                                tabbedPane.setSelectedIndex(i);
+                                break;
+                            }
+                        }
+                    } else if (e.getButton() == MouseEvent.BUTTON3) {
+                        JMenuItem closeCurrentTab = new JMenuItem("Close Current Tab");
+                        closeCurrentTab.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                closeTab(title);
+                            }
+                        });
+                        JMenuItem closeOtherTabs = new JMenuItem("Close Other Tabs");
+                        closeOtherTabs.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                final int count = tabbedPane.getTabCount();
+                                for (int i = count - 1; i >= 0; --i) {
+                                    if (!title.equals(tabbedPane.getTitleAt(i))) {
+                                        tabbedPane.removeTabAt(i);
+                                    }
+                                }
+                            }
+                        });
+                        JMenuItem closeAllTabs = new JMenuItem("Close All Tabs");
+                        closeAllTabs.addActionListener(new ActionListener() {
+                            @Override
+                            public void actionPerformed(ActionEvent e) {
+                                closeAllTabs();
+                            }
+                        });
+                        JPopupMenu popupMenu = new JPopupMenu();
+                        popupMenu.add(closeCurrentTab);
+                        popupMenu.add(closeOtherTabs);
+                        popupMenu.add(closeAllTabs);
+                        popupMenu.show(e.getComponent(), e.getX(), e.getY());
+                    }
+                }
+            }
+        });
+        panel.setToolTipText(tip);
+        File file = new File(title);
+        if (file.exists()) {
+            panel.add(new JLabel(file.getName()));
+        } else {
+            panel.add(new JLabel(title));
+        }
+        if (icon != null) {
+            panel.add(new JLabel(icon), BorderLayout.WEST);
+        }
+        JImageView xClose = new JImageView();
+        xClose.setImagePaintInfo(xCloseIconInfo);
+        xClose.setPreferredSize(new Dimension(xCloseIconInfo.dstW, xCloseIconInfo.dstH));
+        xClose.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 1 && e.getButton() == MouseEvent.BUTTON1) {
+                    closeTab(title);
+                }
+            }
+        });
+        panel.add(xClose, BorderLayout.EAST);
+        return panel;
+    }
+
+    private static final JImageView.ImagePaintInfo xCloseIconInfo = getCloseIcon();
+
+    private static JImageView.ImagePaintInfo getCloseIcon() {
+        final BufferedImage image;
+        try {
+            image = ImageIO.read(SwingTabPane.class.getResource("/close_button.png"));
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        JImageView.ImagePaintInfo info = new JImageView.ImagePaintInfo();
+        info.image = image;
+        info.scaleType = JImageView.ImagePaintInfo.TYPE_RATIO_CENTER;
+        info.usePreferredSize = false;
+        info.dstW = 12;
+        info.dstH = 12;
+        return info;
     }
 
     private static final class TabbedPane extends JTabbedPane implements UiFace.Peer {

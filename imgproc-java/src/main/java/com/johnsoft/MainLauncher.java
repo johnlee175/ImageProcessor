@@ -17,7 +17,6 @@
 package com.johnsoft;
 
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.IOException;
 
 import javax.imageio.ImageIO;
@@ -47,11 +46,11 @@ public class MainLauncher {
     }
 
     private static void mainTestSwing() {
-        UiFace.ImageView image1 = new SwingImageView(MainLauncher.class.getResource("/mm_a.png").getFile());
-        UiFace.ImageView image2 = new SwingImageView(MainLauncher.class.getResource("/mm_b.png").getFile());
+        UiFace.ImageView image1 = new SwingImageView(MainLauncher.class.getResource("/mm_a.png"));
+        UiFace.ImageView image2 = new SwingImageView(MainLauncher.class.getResource("/mm_b.png"));
         BufferedImage image;
         try {
-            image = ImageIO.read(new File(MainLauncher.class.getResource("/mm_j1.jpg").getFile()));
+            image = ImageIO.read(MainLauncher.class.getResource("/mm_j1.jpg"));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }

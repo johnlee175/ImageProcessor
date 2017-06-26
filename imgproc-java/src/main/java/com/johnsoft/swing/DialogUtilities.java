@@ -24,6 +24,7 @@ import java.io.File;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
 /**
@@ -31,18 +32,27 @@ import javax.swing.filechooser.FileFilter;
  * @version 2017-06-09
  */
 public class DialogUtilities {
+    public static void showErrorMessageBox(Throwable thr) {
+        JOptionPane.showMessageDialog(null, thr.toString(), "Error Tips", JOptionPane.ERROR_MESSAGE);
+    }
+
+    public static void showErrorMessageBox(String message) {
+        JOptionPane.showMessageDialog(null, message, "Error Tips", JOptionPane.ERROR_MESSAGE);
+    }
+
     public static File[] showOpenImageFileDialog() {
         return new SimpleOpenFileDialog("Open Image File Dialog",
                 new FileFilter() {
                     @Override
                     public boolean accept(File f) {
-                        return f.isDirectory() || f.getName().endsWith(".png")
-                                || f.getName().endsWith(".jpg");
+                        final String fileName = f.getName();
+                        return f.isDirectory() || fileName.endsWith(".png") || fileName.endsWith("webp")
+                                || fileName.endsWith(".jpg") || fileName.endsWith(".jpeg");
                     }
 
                     @Override
                     public String getDescription() {
-                        return "*.png, *.jpg";
+                        return "*.png, *.jpg, *.webp";
                     }
                 }).showWindow().getSelectFiles();
     }
@@ -52,8 +62,10 @@ public class DialogUtilities {
                 new FileFilter() {
                     @Override
                     public boolean accept(File f) {
-                        return f.isDirectory() || f.getName().endsWith(".png")
-                                || f.getName().endsWith(".jpg");
+                        final String fileName = f.getName();
+                        return f.isDirectory()
+                                || fileName.endsWith(".png")
+                                || fileName.endsWith(".jpg");
                     }
 
                     @Override

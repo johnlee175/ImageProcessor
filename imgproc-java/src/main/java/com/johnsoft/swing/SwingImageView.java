@@ -31,6 +31,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
@@ -50,6 +51,14 @@ public class SwingImageView implements UiFace.ImageView {
     public SwingImageView(File imageFile) {
         try {
             imageLabel = new ImageLabel(ImageIO.read(imageFile));
+        } catch (IOException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    public SwingImageView(URL imageUrl) {
+        try {
+            imageLabel = new ImageLabel(ImageIO.read(imageUrl));
         } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }

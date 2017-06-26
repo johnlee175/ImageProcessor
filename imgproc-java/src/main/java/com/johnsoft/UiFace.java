@@ -56,6 +56,7 @@ public interface UiFace {
 
     interface TabPane extends Ui {
         TabPane addTab(String title, Ui ui);
+        void closeTab(String title);
         Object getActiveTabData();
     }
 

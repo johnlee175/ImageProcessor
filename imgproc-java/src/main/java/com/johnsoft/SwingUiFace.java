@@ -28,6 +28,7 @@ import java.util.Locale;
 import javax.imageio.ImageIO;
 import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.ImageReaderSpi;
+import javax.imageio.spi.ImageWriterSpi;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -43,6 +44,7 @@ import com.johnsoft.swing.SwingMainWindow;
 import com.johnsoft.swing.SwingMenuManager;
 import com.johnsoft.swing.SwingTabPane;
 import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi;
+import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageWriterSpi;
 
 import net.sf.javavp8decoder.imageio.WebPImageReaderSpi;
 
@@ -72,6 +74,8 @@ public class SwingUiFace implements UiFace {
                 .registerServiceProvider(new WebPImageReaderSpi(), ImageReaderSpi.class);
         IIORegistry.getDefaultInstance()
                 .registerServiceProvider(new TIFFImageReaderSpi(), ImageReaderSpi.class); // slowly
+        IIORegistry.getDefaultInstance()
+                .registerServiceProvider(new TIFFImageWriterSpi(), ImageWriterSpi.class); // slowly
     }
 
     public MainWindow getMainWindow() {
@@ -114,9 +118,19 @@ public class SwingUiFace implements UiFace {
                     if (image != null) {
                         try {
                             final File saveFile = DialogUtilities.showSaveImageFileDialog();
-                            ImageIO.write(image, "png", saveFile);
+                            if (saveFile == null) {
+                                return;
+                            }
+                            String fileName = saveFile.getName();
+                            if (fileName.endsWith(".png")) {
+                                ImageIO.write(image, "png", saveFile);
+                            } else if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+                                ImageIO.write(image, "jpg", saveFile);
+                            } else {
+                                ImageIO.write(image, "png", new File(saveFile.getAbsolutePath() + ".png"));
+                            }
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            DialogUtilities.showErrorMessageBox(e);
                         }
                     }
                 }
@@ -138,7 +152,7 @@ public class SwingUiFace implements UiFace {
                     try {
                         image = ImageIO.read(file);
                     } catch (IOException ex) {
-                        ex.printStackTrace();
+                        DialogUtilities.showErrorMessageBox(ex);
                         return;
                     }
                     JDialog dialog = new JDialog((JFrame) getMainWindow().getPeer());
@@ -153,7 +167,7 @@ public class SwingUiFace implements UiFace {
                 }
             }));
             component.setComponentPopupMenu(menu);
-            getTabPane().addTab(file.getName(), swingImageView);
+            getTabPane().addTab(file.getAbsolutePath(), swingImageView);
         }
     }
 
