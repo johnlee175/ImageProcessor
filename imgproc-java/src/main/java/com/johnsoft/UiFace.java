@@ -56,8 +56,11 @@ public interface UiFace {
 
     interface TabPane extends Ui {
         TabPane addTab(String title, Ui ui);
-        void closeTab(String title);
+        TabPane addTabWithExistTitle(String title, Ui ui);
+        TabPane closeTab(String title);
+        TabPane closeTabWithRegexTitle(String title);
         Object getActiveTabData();
+        String getActiveTabIdentifier();
     }
 
     interface MenuManager extends Ui {

@@ -18,6 +18,7 @@ package com.johnsoft.swing;
 
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -36,8 +37,13 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.ImageIO;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
+import javax.swing.WindowConstants;
 
 import com.johnsoft.UiFace;
 
@@ -160,7 +166,27 @@ public class SwingImageView implements UiFace.ImageView {
         @Override
         public void mouseClicked(MouseEvent e) {
             if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2) {
-                System.err.println(imageView.colorAtPoint(e.getPoint()));
+                Color color = imageView.colorAtPoint(e.getPoint());
+                JDialog dialog = new JDialog((JFrame) null, true);
+                JPanel content = new JPanel();
+                JPanel colorPane = new JPanel();
+                colorPane.setBackground(color);
+                colorPane.setPreferredSize(new Dimension(30, 30));
+                String description = '#' + Integer.toHexString(color.getRGB())
+                        + ", a=" + color.getAlpha()
+                        + ", r=" + color.getRed()
+                        + ", g=" + color.getGreen()
+                        + ", b=" + color.getBlue();
+                content.add(colorPane);
+                content.add(new JLabel(description));
+                dialog.setContentPane(content);
+                dialog.setTitle("Current Color On Click Pointer");
+                dialog.setAlwaysOnTop(true);
+                dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+                dialog.pack();
+                dialog.setResizable(false);
+                dialog.setLocationRelativeTo(null);
+                dialog.setVisible(true);
             }
         }
 

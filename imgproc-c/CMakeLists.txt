@@ -48,7 +48,7 @@ add_library(
         # Provides a relative path to your source file(s).
         # Associated headers in the same location as their source
         # file are automatically included.
-        src/main/cpp/main.c
+        src/main/cpp/BaseImageProc_jni.c
         src/main/cpp/BaseImageProc.c)
 
 

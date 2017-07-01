@@ -25,6 +25,7 @@ import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 import javax.swing.Icon;
@@ -38,7 +39,9 @@ import javax.swing.JTabbedPane;
 import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 
+import com.johnsoft.Log;
 import com.johnsoft.SwingUiFace;
+import com.johnsoft.ToolUtilities;
 import com.johnsoft.UiFace;
 
 
@@ -47,6 +50,8 @@ import com.johnsoft.UiFace;
  * @version 2017-06-03
  */
 public class SwingTabPane implements UiFace.TabPane {
+    private final AtomicInteger intGenerator = new AtomicInteger(1);
+
     private final TabbedPane tabbedPane;
     private final SwingUiFace uiface;
 
@@ -68,7 +73,7 @@ public class SwingTabPane implements UiFace.TabPane {
     }
 
     @Override
-    public void closeTab(String title) {
+    public UiFace.TabPane closeTab(String title) {
         final int count = tabbedPane.getTabCount();
         for (int i = count - 1; i >= 0; --i) {
             if (title.equals(tabbedPane.getTitleAt(i))) {
@@ -76,6 +81,33 @@ public class SwingTabPane implements UiFace.TabPane {
                 break;
             }
         }
+        return this;
+    }
+
+    @Override
+    public UiFace.TabPane addTabWithExistTitle(String title, UiFace.Ui ui) {
+        final File file = ToolUtilities.validImagePath(title);
+        if (file == null) {
+            DialogUtilities.showInfoMessageBox("Unknow file name or path!");
+            return this;
+        }
+        final int dotIdx = title.lastIndexOf('.');
+        final String newTitle = title.substring(0, dotIdx) + '_'
+                + intGenerator.getAndIncrement() + title.substring(dotIdx);
+        addTab(newTitle, ui);
+        return this;
+    }
+
+    @Override
+    public UiFace.TabPane closeTabWithRegexTitle(String titleRegex) {
+        final int count = tabbedPane.getTabCount();
+        for (int i = count - 1; i >= 0; --i) {
+            if (tabbedPane.getTitleAt(i).matches(titleRegex)) {
+                tabbedPane.removeTabAt(i);
+                break;
+            }
+        }
+        return this;
     }
 
     public void closeAllTabs() {
@@ -87,7 +119,32 @@ public class SwingTabPane implements UiFace.TabPane {
 
     @Override
     public Object getActiveTabData() {
-        return tabbedPane.getClientProperty(tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()));
+        final int selectIndex = tabbedPane.getSelectedIndex();
+        if (!checkIndex(selectIndex)) {
+            return null;
+        }
+        return tabbedPane.getClientProperty(tabbedPane.getTitleAt(selectIndex));
+    }
+
+    @Override
+    public String getActiveTabIdentifier() {
+        final int selectIndex = tabbedPane.getSelectedIndex();
+        if (!checkIndex(selectIndex)) {
+            return null;
+        }
+        return tabbedPane.getTitleAt(selectIndex);
+    }
+
+    private boolean checkIndex(int selectIndex) {
+        if (selectIndex < 0) {
+            if (tabbedPane.isShowing()) {
+                DialogUtilities.showInfoMessageBox("Show select one tab first!");
+            } else {
+                Log.w("SwingTabPane", "Show select one tab first!");
+            }
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -152,8 +209,8 @@ public class SwingTabPane implements UiFace.TabPane {
             }
         });
         panel.setToolTipText(tip);
-        File file = new File(title);
-        if (file.exists()) {
+        File file = ToolUtilities.validImagePath(title);
+        if (file != null) {
             panel.add(new JLabel(file.getName()));
         } else {
             panel.add(new JLabel(title));

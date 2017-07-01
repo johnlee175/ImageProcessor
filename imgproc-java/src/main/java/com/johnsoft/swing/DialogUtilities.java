@@ -32,6 +32,10 @@ import javax.swing.filechooser.FileFilter;
  * @version 2017-06-09
  */
 public class DialogUtilities {
+    public static void showInfoMessageBox(String message) {
+        JOptionPane.showMessageDialog(null, message, "Info Tips", JOptionPane.INFORMATION_MESSAGE);
+    }
+
     public static void showErrorMessageBox(Throwable thr) {
         JOptionPane.showMessageDialog(null, thr.toString(), "Error Tips", JOptionPane.ERROR_MESSAGE);
     }

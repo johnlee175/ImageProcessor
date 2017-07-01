@@ -41,6 +41,7 @@ public class MainLauncher {
                 .addMenuItem("File", "Open", face.getAction("Open-File"))
                 .addMenuItem("File", "Save", face.getAction("Save-File"))
                 .addMenuItem("Filter", "Grey Picture", face.getAction("Filter-Grey-Picture"))
+                .addMenuItem("Filter", "Color Picture", face.getAction("Filter-Color-Picture"))
                 .assemble();
         face.getMainWindow().show("ImageProcessor", 800, 600);
     }

@@ -16,7 +16,6 @@
  */
 package com.johnsoft;
 
-
 import java.awt.event.ActionEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -36,6 +35,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.UIManager;
+import javax.swing.WindowConstants;
 
 import com.johnsoft.swing.DialogUtilities;
 import com.johnsoft.swing.JImageView;
@@ -43,6 +43,7 @@ import com.johnsoft.swing.SwingImageView;
 import com.johnsoft.swing.SwingMainWindow;
 import com.johnsoft.swing.SwingMenuManager;
 import com.johnsoft.swing.SwingTabPane;
+import com.johnsoft.swing.actions.FilterGreyPictureAction;
 import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi;
 import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageWriterSpi;
 
@@ -135,8 +136,10 @@ public class SwingUiFace implements UiFace {
                     }
                 }
             };
+        } else if ("Filter-Grey-Picture".equals(command)) {
+            return new FilterGreyPictureAction();
         }
-        return  EMPTY_ACTION;
+        return EMPTY_ACTION;
     }
 
     @Override
@@ -161,8 +164,10 @@ public class SwingUiFace implements UiFace {
                     info.image = image;
                     info.scaleType = JImageView.ImagePaintInfo.TYPE_RATIO_CENTER;
                     imageView.setImagePaintInfo(info);
+                    dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
                     dialog.setContentPane(imageView);
                     dialog.setSize(600, 600);
+                    dialog.setLocationRelativeTo(null);
                     dialog.setVisible(true);
                 }
             }));
@@ -175,4 +180,5 @@ public class SwingUiFace implements UiFace {
         public void action(UiFace uiFace, Control control) {
         }
     };
+
 }
