@@ -43,6 +43,8 @@ import com.johnsoft.swing.SwingImageView;
 import com.johnsoft.swing.SwingMainWindow;
 import com.johnsoft.swing.SwingMenuManager;
 import com.johnsoft.swing.SwingTabPane;
+import com.johnsoft.swing.actions.DelegateAction;
+import com.johnsoft.swing.actions.FilterColorPictureAction;
 import com.johnsoft.swing.actions.FilterGreyPictureAction;
 import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi;
 import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageWriterSpi;
@@ -138,6 +140,13 @@ public class SwingUiFace implements UiFace {
             };
         } else if ("Filter-Grey-Picture".equals(command)) {
             return new FilterGreyPictureAction();
+        } else if ("Filter-Color-Picture".equals(command)) {
+            return new DelegateAction(new DelegateAction.Delegate() {
+                @Override
+                public Action getInstance() {
+                    return new FilterColorPictureAction();
+                }
+            });
         }
         return EMPTY_ACTION;
     }

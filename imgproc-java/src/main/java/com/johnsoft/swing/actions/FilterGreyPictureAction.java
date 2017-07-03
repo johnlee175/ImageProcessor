@@ -16,12 +16,11 @@
  */
 package com.johnsoft.swing.actions;
 
+import java.awt.Color;
 import java.awt.ComponentOrientation;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -63,29 +62,21 @@ public class FilterGreyPictureAction extends AbstractBaseFilterAction {
             DialogUtilities.showInfoMessageBox("Parameters invalid");
             return null;
         }
-        BaseFilterDocument doc = view.getDocument();
-        BaseImageProc.filterIndex(doc.type, doc.filterIndex);
-        if (doc.filterIndex == BaseImageProc.INDEX_LINEAR_FILTER
-                || doc.filterIndex == BaseImageProc.INDEX_LOG_FILTER
-                || doc.filterIndex == BaseImageProc.INDEX_GAMMA_FILTER) {
-            BaseImageProc.filterParam(doc.c, doc.l, doc.g);
-        } else if (doc.filterIndex == BaseImageProc.INDEX_BINARY_FILTER) {
-            BaseImageProc.filterParam2(doc.lowLevel, doc.lowPolicy, doc.highLevel, doc.highPolicy);
-        }
+        handleDocument(view.getDocument());
         return BaseImageProc.greyFilter(data, w, h);
     }
 
     private static class BaseFilterView {
         private JComboBox<String> filter = newFilterSelect();
-        private JTextArea description = newTextArea(3, 5);
+        private JTextArea description = newTextArea(3, 30);
 
-        private JTextField cField = new JTextField("0.0",5);
-        private JTextField lField = new JTextField("1.0",5);
-        private JTextField gField = new JTextField("1.0",5);
+        private JTextField cField = newTextField("0.0");
+        private JTextField lField = newTextField("1.0");
+        private JTextField gField = newTextField("1.0");
 
-        private JTextField hlvField = new JTextField("255", 5);
+        private JTextField hlvField = newTextField("255");
         private JComboBox<String> hpField = newPolicySelect();
-        private JTextField llvField = new JTextField("0",5);
+        private JTextField llvField = newTextField("0");
         private JComboBox<String> lpField = newPolicySelect();
 
         private final int type;
@@ -131,81 +122,47 @@ public class FilterGreyPictureAction extends AbstractBaseFilterAction {
                 });
             }
 
-            description.setText("No Parameters required!");
-            filter.addItemListener(new ItemListener() {
+            description.setText(getDefaultFilterDescription("GREY:\n"));
+            filter.addActionListener(new ActionListener() {
                 @Override
-                public void itemStateChanged(ItemEvent e) {
-                    final int idx = filter.getSelectedIndex();
-                    switch(idx)
-                    {
-                        case 0:
-                            description.setText("No Parameters required!");
-                            break;
-                        case 1:
-                            description.setText("No Parameters required!\n"
-                                    + "result = 255 - value;\n"
-                                    + "value in [0, 255], result in [0, 255]");
-                            break;
-                        case 2:
-                            description.setText("result = c + l * value;");
-                            break;
-                        case 3:
-                            description.setText("result = c + l * log(value * g + 1) / (log(g + 1) + 0.001);\n"
-                                    + "value in [0, 1], result in [0, 1]");
-                            break;
-                        case 4:
-                            description.setText("result = c + l * pow(value, g);\n"
-                                    + "value in [0, 1], result in [0, 1]");
-                            break;
-                        case 5:
-                            description.setText("No Parameters required!\n"
-                                    + "x = 0.5 / (value + 0.05);\n"
-                                    + "e1 = log(1 / 0.05 - 1) / log(0.5 / 0.05);\n"
-                                    + "e2 = log(1 / 0.95 - 1) / log(0.5 / 0.95);\n"
-                                    + "e = ceil(min(e1, e2));\n"
-                                    + "result = 1 / (1 + pow(temp, e));\n"
-                                    + "value in [0, 1], result in [0, 1]");
-                            break;
-                        case 6:
-                            description.setText("h-level >= 0 && value >= h-level; then apply h-policy to value;\n"
-                                    + "l-level >= 0 && value <= l-level; then apply l-policy to value;\n");
-                            break;
-                        default:
-                            break;
-                    }
+                public void actionPerformed(ActionEvent e) {
+                    updateFilterDescription(filter, description, "GREY:\n");
                 }
             });
             filter.setSelectedIndex(0);
 
             int gap = 20;
+            Color color = panel.getBackground();
             new GridBagAssembler(panel, ComponentOrientation.LEFT_TO_RIGHT)
                     .fill(GridBagAssembler.FILL_HORIZONTAL)
                     .padding(30, 30, 30, 30)
-                    .wrapLine().gridwidth(6).add(filter).gridwidth(1)
-                    .wrapLine().add(newLabel("c"))
+                    .wrapLine().gridwidth(7).add(filter).gridwidth(1)
+                    .wrapLine().add(newLabel("c", color))
                     .nextColumn().insets(0, 0, 0, gap).add(cField).zeroInsets()
-                    .nextColumn().add(newLabel("l"))
+                    .nextColumn().add(newLabel("l", color))
                     .nextColumn().insets(0, 0, 0, gap).add(lField).zeroInsets()
-                    .nextColumn().add(newLabel("g"))
+                    .nextColumn().add(newLabel("g", color))
                     .nextColumn().insets(0, 0, 0, gap).add(gField).zeroInsets()
-                    .wrapLine().add(newLabel("h-level"))
+                    .wrapLine().add(newLabel("h-level", color))
                     .nextColumn().insets(0, 0, 0, gap).add(hlvField).zeroInsets()
-                    .nextColumn().add(newLabel("h-policy"))
+                    .nextColumn().add(newLabel("h-policy", color))
                     .nextColumn().insets(0, 0, 0, gap).add(hpField).zeroInsets()
-                    .wrapLine().add(newLabel("l-level"))
+                    .wrapLine().add(newLabel("l-level", color))
                     .nextColumn().insets(0, 0, 0, gap).add(llvField).zeroInsets()
-                    .nextColumn().add(newLabel("l-policy"))
+                    .nextColumn().add(newLabel("l-policy", color))
                     .nextColumn().insets(0, 0, 0, gap).add(lpField).zeroInsets()
-                    .wrapLine().size(5, 2).add(new JScrollPane(description))
-                    .size(1,1).gridx(5).add(applyBtn).nextRow().add(cancelBtn);
+                    .wrapLine().size(6, 2).add(new JScrollPane(description))
+                    .size(1, 1).gridx(6).add(applyBtn).nextRow().add(cancelBtn);
 
             return panel;
         }
 
         boolean isFieldsInvalid() {
             final int filterIndex = filter.getSelectedIndex();
-            if (filterIndex == BaseImageProc.INDEX_LINEAR_FILTER
-                    || filterIndex == BaseImageProc.INDEX_LOG_FILTER
+            if (filterIndex == BaseImageProc.INDEX_LINEAR_FILTER) {
+                return !isFloat(cField) || !isFloat(lField);
+            }
+            if (filterIndex == BaseImageProc.INDEX_LOG_FILTER
                     || filterIndex == BaseImageProc.INDEX_GAMMA_FILTER) {
                 return !isFloat(cField) || !isFloat(lField) || !isFloat(gField);
             }
@@ -222,14 +179,14 @@ public class FilterGreyPictureAction extends AbstractBaseFilterAction {
         BaseFilterDocument getDocument() {
             BaseFilterDocument doc = new BaseFilterDocument();
             doc.type = type;
-            doc.filterIndex = filter.getSelectedIndex();
+            doc.filterIndex = Math.max(filter.getSelectedIndex(), 0);
             doc.c = Float.valueOf(cField.getText());
             doc.l = Float.valueOf(lField.getText());
             doc.g = Float.valueOf(gField.getText());
             doc.highLevel = Integer.valueOf(hlvField.getText());
-            doc.highPolicy = hpField.getSelectedIndex();
+            doc.highPolicy = Math.max(hpField.getSelectedIndex(), 0);
             doc.lowLevel = Integer.valueOf(llvField.getText());
-            doc.lowPolicy = lpField.getSelectedIndex();
+            doc.lowPolicy = Math.max(lpField.getSelectedIndex(), 0);
             return doc;
         }
     }

@@ -4,5 +4,6 @@
 */gradle
 -gradlew*
 */build
+*/out
 .DS_Store
 *-Build
