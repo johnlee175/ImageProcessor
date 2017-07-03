@@ -70,10 +70,10 @@ public class FilterColorPictureAction extends AbstractBaseFilterAction {
         this.data = data;
         this.width = w;
         this.height = h;
-        final int option = JOptionPane.showConfirmDialog(null,
+        final int openOption = JOptionPane.showConfirmDialog(null,
                 "Apply to origin image? [Default overlay effect]",
                 "Effect Tips", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        applyToOrigin = option == JOptionPane.YES_OPTION;
+        applyToOrigin = openOption == JOptionPane.YES_OPTION;
         imageView = newImageView(data, w, h);
         description = newTextArea(3, 3);
         JPanel tools = new JPanel(new GridLayout(3, 1));
@@ -85,6 +85,13 @@ public class FilterColorPictureAction extends AbstractBaseFilterAction {
         content.add(new JScrollPane(description), BorderLayout.SOUTH);
         content.add(tools, BorderLayout.EAST);
         showDialog(frame, content);
+        final int saveOption = JOptionPane.showConfirmDialog(null,
+                "Add result image to tabbed panel for save?",
+                "Result Tips", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+        if (saveOption == JOptionPane.YES_OPTION) {
+            final BufferedImage bufferedImage = (BufferedImage) imageView.getImagePaintInfo().image;
+            return bufferedImage.getRGB(0, 0, w, h, data, 0, w);
+        }
         return null;
     }
 
@@ -114,7 +121,7 @@ public class FilterColorPictureAction extends AbstractBaseFilterAction {
     }
 
     private static void showDialog(JFrame frame, JComponent content) {
-        JDialog dialog = new JDialog(frame);
+        JDialog dialog = new JDialog(frame, true);
         dialog.setContentPane(content);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.setSize(800, 600);
