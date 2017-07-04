@@ -16,6 +16,12 @@ JNI_METHOD(jintArray, grey)(JNIEnv *env, jclass klass, jintArray argb, jint w, j
 JNI_METHOD(jintArray, greyColor)(JNIEnv *env, jclass klass, jintArray argb, jint w, jint h);
 JNI_METHOD(jintArray, greyFilter)(JNIEnv *env, jclass klass, jintArray argb, jint w, jint h);
 JNI_METHOD(jintArray, colorFilter)(JNIEnv *env, jclass klass, jintArray argb, jint w, jint h);
+JNI_METHOD(jintArray, greyBitPlaneSlicing)(JNIEnv *env, jclass klass, jintArray argb,
+                                           jint w, jint h, jint bitPosition);
+JNI_METHOD(jintArray, colorBitPlaneSlicing)(JNIEnv *env, jclass klass, jintArray argb,
+                                            jint w, jint h, jint bitPosition);
+JNI_METHOD(jintArray, colorComponentPlaneSlicing)(JNIEnv *env, jclass klass, jintArray argb,
+                                            jint w, jint h, jint position, jint type);
 
 JNI_METHOD(jboolean, filterIndex)(JNIEnv *env, jclass klass, jint type, jint index);
 JNI_METHOD(jboolean, filterParam)(JNIEnv *env, jclass klass, jfloat c, jfloat l, jfloat g);
@@ -237,6 +243,54 @@ JNI_METHOD(jintArray, colorFilter)(JNIEnv *env, jclass klass, jintArray argb, ji
                      grey_color_filters[red_filter_info.index],
                      grey_color_filters[green_filter_info.index],
                      grey_color_filters[blue_filter_info.index]);
+
+    (*env)->ReleaseIntArrayElements(env, argb, argb_ptr, 0);
+    (*env)->ReleaseIntArrayElements(env, result, result_ptr, 0);
+
+    return result;
+}
+
+JNI_METHOD(jintArray, greyBitPlaneSlicing)(JNIEnv *env, jclass klass, jintArray argb,
+                                           jint w, jint h, jint bitPosition) {
+    jsize size = (jsize) w * h;
+    jintArray result = (*env)->NewIntArray(env, size);
+
+    jint *result_ptr = (*env)->GetIntArrayElements(env, result, NULL);
+    jint *argb_ptr = (*env)->GetIntArrayElements(env, argb, NULL);
+
+    calc_grey_bit_plane((int32_t *) result_ptr, (int32_t *) argb_ptr, size, bitPosition);
+
+    (*env)->ReleaseIntArrayElements(env, argb, argb_ptr, 0);
+    (*env)->ReleaseIntArrayElements(env, result, result_ptr, 0);
+
+    return result;
+}
+
+JNI_METHOD(jintArray, colorBitPlaneSlicing)(JNIEnv *env, jclass klass, jintArray argb,
+                                            jint w, jint h, jint bitPosition) {
+    jsize size = (jsize) w * h;
+    jintArray result = (*env)->NewIntArray(env, size);
+
+    jint *result_ptr = (*env)->GetIntArrayElements(env, result, NULL);
+    jint *argb_ptr = (*env)->GetIntArrayElements(env, argb, NULL);
+
+    calc_rgb_bit_plane((int32_t *) result_ptr, (int32_t *) argb_ptr, size, bitPosition);
+
+    (*env)->ReleaseIntArrayElements(env, argb, argb_ptr, 0);
+    (*env)->ReleaseIntArrayElements(env, result, result_ptr, 0);
+
+    return result;
+}
+
+JNI_METHOD(jintArray, colorComponentPlaneSlicing)(JNIEnv *env, jclass klass, jintArray argb,
+                                                  jint w, jint h, jint position, jint type) {
+    jsize size = (jsize) w * h;
+    jintArray result = (*env)->NewIntArray(env, size);
+
+    jint *result_ptr = (*env)->GetIntArrayElements(env, result, NULL);
+    jint *argb_ptr = (*env)->GetIntArrayElements(env, argb, NULL);
+
+    calc_rgb_component_plane((int32_t *) result_ptr, (int32_t *) argb_ptr, size, position, type);
 
     (*env)->ReleaseIntArrayElements(env, argb, argb_ptr, 0);
     (*env)->ReleaseIntArrayElements(env, result, result_ptr, 0);

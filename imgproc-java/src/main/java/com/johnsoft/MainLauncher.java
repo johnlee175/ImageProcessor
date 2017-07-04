@@ -42,6 +42,9 @@ public class MainLauncher {
                 .addMenuItem("File", "Save", face.getAction("Save-File"))
                 .addMenuItem("Filter", "Grey Picture", face.getAction("Filter-Grey-Picture"))
                 .addMenuItem("Filter", "Color Picture", face.getAction("Filter-Color-Picture"))
+                .addMenuItem("Filter", "Grey Bit Plane", face.getAction("Filter-Grey-Bit-Plane"))
+                .addMenuItem("Filter", "Color Bit Plane", face.getAction("Filter-Color-Bit-Plane"))
+                .addMenuItem("Filter", "Color Component Plane", face.getAction("Filter-Color-Component-Plane"))
                 .assemble();
         face.getMainWindow().show("ImageProcessor", 800, 600);
     }

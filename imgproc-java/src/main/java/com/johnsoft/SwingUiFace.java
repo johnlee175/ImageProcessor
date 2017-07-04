@@ -43,9 +43,12 @@ import com.johnsoft.swing.SwingImageView;
 import com.johnsoft.swing.SwingMainWindow;
 import com.johnsoft.swing.SwingMenuManager;
 import com.johnsoft.swing.SwingTabPane;
+import com.johnsoft.swing.actions.PlaneSliceColorBitAction;
+import com.johnsoft.swing.actions.PlaneSliceGreyBitAction;
 import com.johnsoft.swing.actions.DelegateAction;
 import com.johnsoft.swing.actions.FilterColorPictureAction;
 import com.johnsoft.swing.actions.FilterGreyPictureAction;
+import com.johnsoft.swing.actions.PlaneSliceColorCompAction;
 import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi;
 import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageWriterSpi;
 
@@ -147,6 +150,12 @@ public class SwingUiFace implements UiFace {
                     return new FilterColorPictureAction();
                 }
             });
+        } else if ("Filter-Grey-Bit-Plane".equals(command)) {
+            return new PlaneSliceGreyBitAction();
+        } else if ("Filter-Color-Bit-Plane".equals(command)) {
+            return new PlaneSliceColorBitAction();
+        } else if ("Filter-Color-Component-Plane".equals(command)) {
+            return new PlaneSliceColorCompAction();
         }
         return EMPTY_ACTION;
     }

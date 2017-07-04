@@ -32,6 +32,14 @@ public class BaseImageProc {
     public static final int FILTER_TYPE_GREEN = 2;
     public static final int FILTER_TYPE_BLUE = 3;
 
+    public static final int COMPONENT_PLANE_POSITION_ALPHA = 0;
+    public static final int COMPONENT_PLANE_POSITION_RED = 1;
+    public static final int COMPONENT_PLANE_POSITION_GREEN = 2;
+    public static final int COMPONENT_PLANE_POSITION_BLUE = 3;
+
+    public static final int COMPONENT_PLANE_TYPE_COLOR = 0;
+    public static final int COMPONENT_PLANE_TYPE_GREY = 1;
+
     public static final int INDEX_NO_FILTER = 0;
     public static final int INDEX_REVERSE_FILTER = 1;
     public static final int INDEX_LINEAR_FILTER = 2;
@@ -49,6 +57,22 @@ public class BaseImageProc {
 
     public static native synchronized int[] greyFilter(int[] argb, int w, int h);
     public static native synchronized int[] colorFilter(int[] argb, int w, int h);
+
+    public static native synchronized int[] greyBitPlaneSlicing(int[] argb, int w, int h, int bitPosition);
+    public static native synchronized int[] colorBitPlaneSlicing(int[] argb, int w, int h, int bitPosition);
+    public static native synchronized int[] colorComponentPlaneSlicing(int[] argb, int w, int h,
+                                                                       @MagicConstant(intValues = {
+                                                                               COMPONENT_PLANE_POSITION_ALPHA,
+                                                                               COMPONENT_PLANE_POSITION_RED,
+                                                                               COMPONENT_PLANE_POSITION_GREEN,
+                                                                               COMPONENT_PLANE_POSITION_BLUE
+                                                                       })
+                                                                               int position,
+                                                                       @MagicConstant(intValues = {
+                                                                               COMPONENT_PLANE_TYPE_COLOR,
+                                                                               COMPONENT_PLANE_TYPE_GREY
+                                                                       })
+                                                                               int type);
 
     /**
      * @param type  0=grey, 1=red, 2=green, 3=blue

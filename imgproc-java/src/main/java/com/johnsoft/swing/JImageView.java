@@ -54,6 +54,8 @@ public class JImageView extends JLabel {
         public int scaleType;
         /** default use clip bounds */
         public boolean usePreferredSize;
+        /** when use preferred size, will recalculate size base image size, if set true, will ignore image size */
+        public boolean noResize;
         /** normalize clipping image area, only valid if scaleType in {@link #TYPE_CUSTOM},
          * {@link #TYPE_FILL_IMAGE_VIEW}, {@link #TYPE_FIT_IMAGE_SIZE}, {@link #TYPE_FIT_VIEW_SIZE} */
         public int srcX, srcY, srcW, srcH;
@@ -120,7 +122,7 @@ public class JImageView extends JLabel {
     @Override
     public void doLayout() {
         ImagePaintInfo pi = getImagePaintInfo();
-        if (pi.usePreferredSize && pi.image != null) {
+        if (!pi.noResize && pi.usePreferredSize && pi.image != null) {
             setPreferredSize(new Dimension(Math.max(getWidth(), pi.image.getWidth(null)),
                     Math.max(getHeight(), pi.image.getHeight(null))));
         }

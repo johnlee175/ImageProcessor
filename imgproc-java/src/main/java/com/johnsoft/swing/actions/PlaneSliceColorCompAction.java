@@ -1,0 +1,64 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache license, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the license for the specific language governing permissions and
+ * limitations under the license.
+ */
+package com.johnsoft.swing.actions;
+
+import com.johnsoft.alg.BaseImageProc;
+import com.johnsoft.swing.JImageView;
+
+/**
+ * @author John Kenrinus Lee
+ * @version 2017-07-04
+ */
+public class PlaneSliceColorCompAction extends AbstractPlaneSliceAction {
+    @Override
+    protected JImageView[] getImageView(int[] data, int w, int h) {
+        JImageView[] imageViews = new JImageView[6];
+        int i = 0;
+        int[] result;
+
+        result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
+                BaseImageProc.COMPONENT_PLANE_POSITION_RED, BaseImageProc.COMPONENT_PLANE_TYPE_COLOR);
+        imageViews[i++] = newImageView(result, w, h);
+
+        result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
+                BaseImageProc.COMPONENT_PLANE_POSITION_GREEN, BaseImageProc.COMPONENT_PLANE_TYPE_COLOR);
+        imageViews[i++] = newImageView(result, w, h);
+
+        result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
+                BaseImageProc.COMPONENT_PLANE_POSITION_BLUE, BaseImageProc.COMPONENT_PLANE_TYPE_COLOR);
+        imageViews[i++] = newImageView(result, w, h);
+
+        result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
+                BaseImageProc.COMPONENT_PLANE_POSITION_RED, BaseImageProc.COMPONENT_PLANE_TYPE_GREY);
+        imageViews[i++] = newImageView(result, w, h);
+
+        result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
+                BaseImageProc.COMPONENT_PLANE_POSITION_GREEN, BaseImageProc.COMPONENT_PLANE_TYPE_GREY);
+        imageViews[i++] = newImageView(result, w, h);
+
+        result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
+                BaseImageProc.COMPONENT_PLANE_POSITION_BLUE, BaseImageProc.COMPONENT_PLANE_TYPE_GREY);
+        imageViews[i] = newImageView(result, w, h);
+
+        return imageViews;
+    }
+
+    @Override
+    protected int getRowCount() {
+        return 2;
+    }
+}
