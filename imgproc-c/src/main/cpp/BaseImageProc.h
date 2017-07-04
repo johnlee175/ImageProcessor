@@ -36,5 +36,7 @@ void calc_grey_bit_plane(int32_t *result, const int32_t *__restrict__ argb, int3
 void calc_rgb_bit_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size, int32_t bit_position);
 void calc_rgb_component_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size, int32_t position, int32_t type);
 void calc_combine_simple_plane(int32_t *source, const int32_t *__restrict__ target, int32_t size);
+void calc_combine_bits_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size,
+                             int32_t type, int32_t mask);
 
 #endif //PROJECT_BASEIMAGEPROC_H

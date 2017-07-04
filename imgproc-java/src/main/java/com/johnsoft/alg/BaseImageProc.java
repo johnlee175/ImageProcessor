@@ -75,6 +75,11 @@ public class BaseImageProc {
                                                                                int type);
 
     public static native synchronized int[] combineSimplePlane(int[][] argbs, int w, int h);
+    public static native synchronized int[] combineBitsPlane(int[] argb, int w, int h,
+                                                             @MagicConstant(intValues = {
+                                                                     COMPONENT_PLANE_TYPE_COLOR,
+                                                                     COMPONENT_PLANE_TYPE_GREY
+                                                             }) int type, int mask);
 
     /**
      * @param type  0=grey, 1=red, 2=green, 3=blue

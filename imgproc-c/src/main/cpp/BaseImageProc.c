@@ -118,3 +118,14 @@ void calc_combine_simple_plane(int32_t *source, const int32_t *__restrict__ targ
         source[i] = assemble_color_int((tr == 0 ? sr : tr), (tg == 0 ? sg : tg), (tb == 0 ? sb : tb));
     }
 }
+
+void calc_combine_bits_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size,
+                             int32_t type, int32_t mask) {
+    for (int32_t i = 0; i < size; ++i) {
+        if (type == 1) {
+            result[i] = grey_to_color(color_to_grey(argb[i]) & mask);
+        } else {
+            result[i] = argb[i] & mask;
+        }
+    }
+}
