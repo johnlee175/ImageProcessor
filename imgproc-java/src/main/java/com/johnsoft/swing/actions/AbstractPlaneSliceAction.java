@@ -16,10 +16,17 @@
  */
 package com.johnsoft.swing.actions;
 
+import java.awt.Color;
 import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 
+import javax.swing.BorderFactory;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -27,8 +34,10 @@ import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
 
 import com.johnsoft.UiFace;
+import com.johnsoft.alg.BaseImageProc;
 import com.johnsoft.swing.GridBagAssembler;
 import com.johnsoft.swing.JImageView;
+import com.johnsoft.swing.SwingImageView;
 
 /**
  * @author John Kenrinus Lee
@@ -45,7 +54,7 @@ public abstract class AbstractPlaneSliceAction implements UiFace.Action {
             final int[] data = new int[w * h];
             image.getRGB(0, 0, w, h, data, 0, w);
 
-            final JImageView[] imageViews = getImageView(data, w, h);
+            final SelectableImageView[] imageViews = getImageViews(data, w, h);
             final int count = imageViews.length;
             final int rowCount = getRowCount();
             if (count <= 0 || rowCount <= 0) {
@@ -69,14 +78,52 @@ public abstract class AbstractPlaneSliceAction implements UiFace.Action {
             final JDialog dialog = new JDialog((JFrame) null, "Plane Slice");
             dialog.setContentPane(scrollPane);
             dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+            if (shouldCombineSave()) {
+                dialog.addWindowListener(new WindowAdapter() {
+                    @Override
+                    public void windowClosed(WindowEvent e) {
+                        ArrayList<int[]> list = new ArrayList<>(count);
+                        SelectableImageView iv;
+                        BufferedImage image;
+                        for (int i = 0; i < count; ++i) {
+                            iv = imageViews[i];
+                            if (iv.isSelected()) {
+                                image = (BufferedImage) iv.getImagePaintInfo().image;
+                                final int w = image.getWidth();
+                                final int h = image.getHeight();
+                                list.add(image.getRGB(0, 0, w, h, null, 0, w));
+                            }
+                        }
+                        if (!list.isEmpty()) {
+                            final int[] argb;
+                            if (list.size() == 1) {
+                                argb = list.get(0);
+                            } else {
+                                final int[][] datas = new int[list.size()][];
+                                list.toArray(datas);
+                                argb = BaseImageProc.combineSimplePlane(datas, w, h);
+                            }
+                            final SwingImageView resultView = new SwingImageView(w, h, argb);
+                            final String title = tabPane.getActiveTabIdentifier();
+                            tabPane.addTabWithExistTitle(title, resultView);
+                        }
+                    }
+                });
+            }
             dialog.setSize(800, 600);
             dialog.setLocationRelativeTo(null);
             dialog.setVisible(true);
         }
     }
 
-    protected static JImageView newImageView(int[] data, int w, int h) {
-        JImageView imageView = new JImageView();
+    protected abstract SelectableImageView[] getImageViews(int[] data, int w, int h);
+
+    protected abstract int getRowCount();
+
+    protected abstract boolean shouldCombineSave();
+
+    protected static SelectableImageView newImageView(int[] data, int w, int h) {
+        SelectableImageView imageView = new SelectableImageView();
         JImageView.ImagePaintInfo info = new JImageView.ImagePaintInfo();
         BufferedImage bufferedImage = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
         bufferedImage.setRGB(0, 0, w, h, data, 0, w);
@@ -89,7 +136,31 @@ public abstract class AbstractPlaneSliceAction implements UiFace.Action {
         return imageView;
     }
 
-    protected abstract JImageView[] getImageView(int[] data, int w, int h);
+    protected static final class SelectableImageView extends JImageView {
+        private boolean selected;
 
-    protected abstract int getRowCount();
+        public SelectableImageView() {
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 1) {
+                        setSelected(!isSelected());
+                    }
+                }
+            });
+        }
+
+        public void setSelected(boolean selected) {
+            this.selected = selected;
+            if (selected) {
+                setBorder(BorderFactory.createLineBorder(Color.CYAN, 4));
+            } else {
+                setBorder(BorderFactory.createEmptyBorder());
+            }
+        }
+
+        public boolean isSelected() {
+            return selected;
+        }
+    }
 }

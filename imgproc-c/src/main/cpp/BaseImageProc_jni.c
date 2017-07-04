@@ -22,6 +22,7 @@ JNI_METHOD(jintArray, colorBitPlaneSlicing)(JNIEnv *env, jclass klass, jintArray
                                             jint w, jint h, jint bitPosition);
 JNI_METHOD(jintArray, colorComponentPlaneSlicing)(JNIEnv *env, jclass klass, jintArray argb,
                                             jint w, jint h, jint position, jint type);
+JNI_METHOD(jintArray, combineSimplePlane)(JNIEnv *env, jclass klass, jobjectArray argbs, jint w, jint h);
 
 JNI_METHOD(jboolean, filterIndex)(JNIEnv *env, jclass klass, jint type, jint index);
 JNI_METHOD(jboolean, filterParam)(JNIEnv *env, jclass klass, jfloat c, jfloat l, jfloat g);
@@ -295,6 +296,33 @@ JNI_METHOD(jintArray, colorComponentPlaneSlicing)(JNIEnv *env, jclass klass, jin
     (*env)->ReleaseIntArrayElements(env, argb, argb_ptr, 0);
     (*env)->ReleaseIntArrayElements(env, result, result_ptr, 0);
 
+    return result;
+}
+
+JNI_METHOD(jintArray, combineSimplePlane)(JNIEnv *env, jclass klass, jobjectArray argbs, jint w, jint h) {
+    jsize size = (jsize) w * h;
+
+    jintArray result = (*env)->NewIntArray(env, size);
+    jint *result_ptr = (*env)->GetIntArrayElements(env, result, NULL);
+
+    jint length = (*env)->GetArrayLength(env, argbs);
+    if (length > 0) {
+        jintArray source = (jintArray) (*env)->GetObjectArrayElement(env, argbs, 0);
+        jint *source_ptr = (*env)->GetIntArrayElements(env, source, NULL);
+        memcpy(result_ptr, source_ptr, size);
+        (*env)->ReleaseIntArrayElements(env, source, source_ptr, 0);
+
+        if (length > 1) {
+            for (jint i = 1; i < length; ++i) {
+                jintArray target = (jintArray) (*env)->GetObjectArrayElement(env, argbs,i);
+                jint *target_ptr = (*env)->GetIntArrayElements(env, target, NULL);
+                calc_combine_simple_plane((int32_t *) result_ptr, (int32_t *) target_ptr, size);
+                (*env)->ReleaseIntArrayElements(env, target, target_ptr, 0);
+            }
+        }
+    }
+
+    (*env)->ReleaseIntArrayElements(env, result, result_ptr, 0);
     return result;
 }
 

@@ -58,7 +58,7 @@ void calc_rgb_color_filter(int32_t *result, int32_t *argb, int32_t size, reset_f
 }
 
 void calc_grey_bit_plane(int32_t *result, int32_t *argb, int32_t size, int32_t bit_position) {
-    int32_t  avg;
+    int32_t avg;
     for (int32_t i = 0; i < size; ++i) {
         avg = color_to_grey(argb[i]);
         if (((avg & 0xFF) & (1 << bit_position)) == 0) {
@@ -122,5 +122,18 @@ void calc_rgb_component_plane(int32_t *result, int32_t *argb, int32_t size, int3
                 result[i] = 0xFFFFFFFF;
                 break;
         }
+    }
+}
+
+void calc_combine_simple_plane(int32_t *source, int32_t *target, int32_t size) {
+    int32_t sr, sg, sb, tr, tg, tb;
+    for (int32_t i = 0; i < size; ++i) {
+        sr = (source[i] >> 16) & 0xFF;
+        sg = (source[i] >> 8) & 0xFF;
+        sb = source[i] & 0xFF;
+        tr = (target[i] >> 16) & 0xFF;
+        tg = (target[i] >> 8) & 0xFF;
+        tb = target[i] & 0xFF;
+        source[i] = assemble_color_int((tr == 0 ? sr : tr), (tg == 0 ? sg : tg), (tb == 0 ? sb : tb));
     }
 }

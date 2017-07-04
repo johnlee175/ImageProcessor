@@ -18,5 +18,6 @@ void calc_rgb_color_filter(int32_t *result, int32_t *argb, int32_t size, reset_f
 void calc_grey_bit_plane(int32_t *result, int32_t *argb, int32_t size, int32_t bit_position);
 void calc_rgb_bit_plane(int32_t *result, int32_t *argb, int32_t size, int32_t bit_position);
 void calc_rgb_component_plane(int32_t *result, int32_t *argb, int32_t size, int32_t position, int32_t type);
+void calc_combine_simple_plane(int32_t *source, int32_t *target, int32_t size);
 
 #endif //PROJECT_BASEIMAGEPROC_H

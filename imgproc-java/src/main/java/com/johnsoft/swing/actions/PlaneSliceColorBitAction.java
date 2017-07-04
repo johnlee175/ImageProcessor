@@ -17,7 +17,6 @@
 package com.johnsoft.swing.actions;
 
 import com.johnsoft.alg.BaseImageProc;
-import com.johnsoft.swing.JImageView;
 
 /**
  * @author John Kenrinus Lee
@@ -25,8 +24,8 @@ import com.johnsoft.swing.JImageView;
  */
 public class PlaneSliceColorBitAction extends AbstractPlaneSliceAction {
     @Override
-    protected JImageView[] getImageView(int[] data, int w, int h) {
-        JImageView[] imageViews = new JImageView[24];
+    protected SelectableImageView[] getImageViews(int[] data, int w, int h) {
+        SelectableImageView[] imageViews = new SelectableImageView[24];
         int[] result;
         for (int i = 0; i < 24; ++i) {
             result = BaseImageProc.colorBitPlaneSlicing(data, w, h, i);
@@ -38,5 +37,10 @@ public class PlaneSliceColorBitAction extends AbstractPlaneSliceAction {
     @Override
     protected int getRowCount() {
         return 6;
+    }
+
+    @Override
+    protected boolean shouldCombineSave() {
+        return true;
     }
 }

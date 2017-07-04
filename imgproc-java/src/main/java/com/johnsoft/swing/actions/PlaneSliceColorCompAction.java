@@ -17,7 +17,6 @@
 package com.johnsoft.swing.actions;
 
 import com.johnsoft.alg.BaseImageProc;
-import com.johnsoft.swing.JImageView;
 
 /**
  * @author John Kenrinus Lee
@@ -25,8 +24,8 @@ import com.johnsoft.swing.JImageView;
  */
 public class PlaneSliceColorCompAction extends AbstractPlaneSliceAction {
     @Override
-    protected JImageView[] getImageView(int[] data, int w, int h) {
-        JImageView[] imageViews = new JImageView[6];
+    protected SelectableImageView[] getImageViews(int[] data, int w, int h) {
+        SelectableImageView[] imageViews = new SelectableImageView[6];
         int i = 0;
         int[] result;
 
@@ -60,5 +59,10 @@ public class PlaneSliceColorCompAction extends AbstractPlaneSliceAction {
     @Override
     protected int getRowCount() {
         return 2;
+    }
+
+    @Override
+    protected boolean shouldCombineSave() {
+        return false;
     }
 }

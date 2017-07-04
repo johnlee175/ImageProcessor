@@ -74,6 +74,8 @@ public class BaseImageProc {
                                                                        })
                                                                                int type);
 
+    public static native synchronized int[] combineSimplePlane(int[][] argbs, int w, int h);
+
     /**
      * @param type  0=grey, 1=red, 2=green, 3=blue
      * @param index 0=no_filter, 1=reverse_filter, 2=linear_filter, 3=log_filter,
@@ -104,4 +106,5 @@ public class BaseImageProc {
                                                                    BINARY_FILTER_POLICY_MIN,
                                                                    BINARY_FILTER_POLICY_MAX})
                                                                    int highPolicy);
+
 }
