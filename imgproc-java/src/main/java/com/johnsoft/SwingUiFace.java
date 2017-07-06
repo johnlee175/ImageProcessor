@@ -43,6 +43,7 @@ import com.johnsoft.swing.SwingImageView;
 import com.johnsoft.swing.SwingMainWindow;
 import com.johnsoft.swing.SwingMenuManager;
 import com.johnsoft.swing.SwingTabPane;
+import com.johnsoft.swing.actions.ChartHistogramAction;
 import com.johnsoft.swing.actions.DelegateAction;
 import com.johnsoft.swing.actions.FilterColorPictureAction;
 import com.johnsoft.swing.actions.FilterGreyPictureAction;
@@ -159,6 +160,8 @@ public class SwingUiFace implements UiFace {
             return new PlaneSliceColorCompAction();
         } else if ("Filter-Combine-Bit-Plane".equals(command)) {
             return new PlaneCombineBitAction();
+        } else if ("Chart-Histogram".equals(command)) {
+            return new ChartHistogramAction();
         }
         return EMPTY_ACTION;
     }

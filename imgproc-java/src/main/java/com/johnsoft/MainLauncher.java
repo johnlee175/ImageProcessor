@@ -37,7 +37,7 @@ public class MainLauncher {
 //        DebugUtils.enableSwingAllDebugLog();
         UiFace face = SwingUiFace.getDefault();
         face.getMenuManager()
-                .addMenus("File", "Filter")
+                .addMenus("File", "Filter", "Chart")
                 .addMenuItem("File", "Open", face.getAction("Open-File"))
                 .addMenuItem("File", "Save", face.getAction("Save-File"))
                 .addMenuItem("Filter", "Grey Picture",
@@ -52,6 +52,8 @@ public class MainLauncher {
                         face.getAction("Filter-Color-Component-Plane"))
                 .addMenuItem("Filter", "Combine Bit Plane",
                         face.getAction("Filter-Combine-Bit-Plane"))
+                .addMenuItem("Chart", "Histogram",
+                        face.getAction("Chart-Histogram"))
                 .assemble();
         face.getMainWindow().show("ImageProcessor", 800, 600);
     }
