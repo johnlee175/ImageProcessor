@@ -41,6 +41,7 @@ import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.ui.RectangleEdge;
 
+import com.johnsoft.alg.BaseImageProc;
 import com.johnsoft.swing.GridBagAssembler;
 
 /**
@@ -80,9 +81,7 @@ public class Histogram {
         final JFreeChart chart = ChartFactory.createBarChart(null,
                 "Color", "Count",
                 dataset, PlotOrientation.VERTICAL, false, true, false);
-        chart.setNotify(false);
-        final CategoryPlot plot = (CategoryPlot) chart.getPlot();
-        plot.setNotify(false);
+        final CategoryPlot plot = chart.getCategoryPlot();
         plot.getDomainAxis().setVisible(false);
         plot.getRangeAxis().setLabel(null);
         plot.setRangeGridlinesVisible(true);
@@ -134,7 +133,6 @@ public class Histogram {
 
     private static CategoryDataset makeCategoryDataset(Map<Integer, Integer> map) {
         final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-        dataset.setNotify(false);
         for (int i = 0; i < 256; ++i) {
             dataset.addValue((Number) (map.containsKey(i) ? map.get(i) : 0), "Color", i);
         }
@@ -167,10 +165,7 @@ public class Histogram {
         } else if (Color.BLUE.equals(color)) {
             return (data >> 0) & 0xFF;
         } else if (Color.GRAY.equals(color)) {
-            final int r = (data >> 16) & 0xFF;
-            final int g = (data >> 8) & 0xFF;
-            final int b = (data >> 0) & 0xFF;
-            return (r * 19595 + g * 38469 + b * 7472) >> 16;
+            return BaseImageProc.calcGrey(data);
         } else {
             throw new IllegalArgumentException("Unknown color!");
         }

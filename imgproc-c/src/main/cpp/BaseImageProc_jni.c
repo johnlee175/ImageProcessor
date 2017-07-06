@@ -12,8 +12,10 @@ JNI_SYMBOL(package_name, class_name, method_name)
 #define JNI_METHOD(return_value, method_name) JNI_PREFIX(PROJECT_PACKAGE_NAME, CLASS_NAME, method_name, return_value)
 
 /* interface definitions begin */
+JNI_METHOD(jint, calcGrey)(JNIEnv *env, jclass klass, jint argb);
 JNI_METHOD(jintArray, grey)(JNIEnv *env, jclass klass, jintArray argb, jint w, jint h);
 JNI_METHOD(jintArray, greyColor)(JNIEnv *env, jclass klass, jintArray argb, jint w, jint h);
+JNI_METHOD(jdoubleArray, calcGreyFilter)(JNIEnv *env, jclass klass, jdoubleArray argb);
 JNI_METHOD(jintArray, greyFilter)(JNIEnv *env, jclass klass, jintArray argb, jint w, jint h);
 JNI_METHOD(jintArray, colorFilter)(JNIEnv *env, jclass klass, jintArray argb, jint w, jint h);
 JNI_METHOD(jintArray, greyBitPlaneSlicing)(JNIEnv *env, jclass klass, jintArray argb,
@@ -189,6 +191,10 @@ component_filter grey_color_filters[] = {
 /* private utilities end */
 
 /* interface implements begin */
+JNI_METHOD(jint, calcGrey)(JNIEnv *env, jclass klass, jint argb) {
+    return color_to_grey(argb);
+}
+
 JNI_METHOD(jintArray, grey)(JNIEnv *env, jclass klass, jintArray argb, jint w, jint h) {
     jsize size = (jsize) w * h;
     jintArray result = (*env)->NewIntArray(env, size);
@@ -215,6 +221,22 @@ JNI_METHOD(jintArray, greyColor)(JNIEnv *env, jclass klass, jintArray argb, jint
 
     (*env)->ReleaseIntArrayElements(env, argb, argb_ptr, 0);
     (*env)->ReleaseIntArrayElements(env, result, result_ptr, 0);
+
+    return result;
+}
+
+JNI_METHOD(jdoubleArray, calcGreyFilter)(JNIEnv *env, jclass klass, jdoubleArray argb) {
+    jsize size = (*env)->GetArrayLength(env, argb);
+    jdoubleArray result = (*env)->NewDoubleArray(env, size);
+
+    jdouble *result_ptr = (*env)->GetDoubleArrayElements(env, result, NULL);
+    jdouble *argb_ptr = (*env)->GetDoubleArrayElements(env, argb, NULL);
+
+    calc_grey_normal_filter((double *) result_ptr, (double *) argb_ptr, size, grey_filter_reset,
+                           grey_color_filters[grey_filter_info.index]);
+
+    (*env)->ReleaseDoubleArrayElements(env, argb, argb_ptr, 0);
+    (*env)->ReleaseDoubleArrayElements(env, result, result_ptr, 0);
 
     return result;
 }
@@ -307,7 +329,7 @@ JNI_METHOD(jintArray, combineSimplePlane)(JNIEnv *env, jclass klass, jobjectArra
     jintArray result = (*env)->NewIntArray(env, size);
     jint *result_ptr = (*env)->GetIntArrayElements(env, result, NULL);
 
-    jint length = (*env)->GetArrayLength(env, argbs);
+    jsize length = (*env)->GetArrayLength(env, argbs);
     if (length > 0) {
         jintArray source = (jintArray) (*env)->GetObjectArrayElement(env, argbs, 0);
         jint *source_ptr = (*env)->GetIntArrayElements(env, source, NULL);
@@ -315,7 +337,7 @@ JNI_METHOD(jintArray, combineSimplePlane)(JNIEnv *env, jclass klass, jobjectArra
         (*env)->ReleaseIntArrayElements(env, source, source_ptr, 0);
 
         if (length > 1) {
-            for (jint i = 1; i < length; ++i) {
+            for (jsize i = 1; i < length; ++i) {
                 jintArray target = (jintArray) (*env)->GetObjectArrayElement(env, argbs,i);
                 jint *target_ptr = (*env)->GetIntArrayElements(env, target, NULL);
                 calc_combine_simple_plane((int32_t *) result_ptr, (int32_t *) target_ptr, size);

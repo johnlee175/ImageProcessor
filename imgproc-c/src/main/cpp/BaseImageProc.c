@@ -12,6 +12,14 @@ void calc_grey_color(int32_t *result, const int32_t *__restrict__ argb, int32_t 
     }
 }
 
+void calc_grey_normal_filter(double *result, const double *__restrict__ argb, int32_t size,
+                             reset_filter reset, component_filter grey_filter) {
+    for (int32_t i = 0; i < size; ++i) {
+        reset();
+        result[i] = grey_filter((int32_t) (argb[i] * 255.0)) / 255.0;
+    }
+}
+
 void calc_grey_color_filter(int32_t *result, const int32_t *__restrict__ argb, int32_t size,
                             reset_filter reset, component_filter grey_filter) {
     for (int32_t i = 0; i < size; ++i) {

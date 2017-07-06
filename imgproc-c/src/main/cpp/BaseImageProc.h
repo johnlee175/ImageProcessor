@@ -16,7 +16,7 @@ __inline__ int32_t color_to_grey(int32_t argb) {
     r = (argb >> 16) & 0xFF;
     g = (argb >> 8) & 0xFF;
     b = argb & 0xFF;
-    return (r * 30 + g * 59 + b * 11 + 50) / 100;
+    return (r * 19595 + g * 38469 + b * 7472) >> 16;
 }
 
 __inline__ int32_t assemble_color_int(int32_t r, int32_t g, int32_t b) {
@@ -28,6 +28,8 @@ __inline__ int32_t assemble_color_int(int32_t r, int32_t g, int32_t b) {
 
 void calc_raw_grey(int32_t *result, const int32_t *__restrict__ argb, int32_t size);
 void calc_grey_color(int32_t *result, const int32_t *__restrict__ argb, int32_t size);
+void calc_grey_normal_filter(double *result, const double *__restrict__ argb, int32_t size,
+                            reset_filter reset, component_filter grey_filter);
 void calc_grey_color_filter(int32_t *result, const int32_t *__restrict__ argb, int32_t size,
                             reset_filter reset, component_filter grey_filter);
 void calc_rgb_color_filter(int32_t *result, const int32_t *__restrict__ argb, int32_t size, reset_filter reset,

@@ -52,9 +52,11 @@ public class BaseImageProc {
     public static final int BINARY_FILTER_POLICY_MIN = 1;
     public static final int BINARY_FILTER_POLICY_MAX = 2;
 
+    public static native synchronized int calcGrey(int argb);
     public static native synchronized int[] grey(int[] argb, int w, int h);
     public static native synchronized int[] greyColor(int[] argb, int w, int h);
 
+    public static native synchronized double[] calcGreyFilter(double[] argb);
     public static native synchronized int[] greyFilter(int[] argb, int w, int h);
     public static native synchronized int[] colorFilter(int[] argb, int w, int h);
 

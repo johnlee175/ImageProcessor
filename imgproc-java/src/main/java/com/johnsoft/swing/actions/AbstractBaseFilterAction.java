@@ -59,7 +59,7 @@ public abstract class AbstractBaseFilterAction implements UiFace.Action {
 
     protected abstract int[] subAction(JFrame frame, int[] data, int w, int h);
 
-    protected void handleDocument(BaseFilterDocument doc) {
+    protected static void handleDocument(BaseFilterDocument doc) {
         BaseImageProc.filterIndex(doc.type, doc.filterIndex);
         if (doc.filterIndex == BaseImageProc.INDEX_LINEAR_FILTER
                 || doc.filterIndex == BaseImageProc.INDEX_LOG_FILTER

@@ -16,15 +16,17 @@
  */
 package com.johnsoft.swing.actions;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.ComponentOrientation;
+import java.awt.Dimension;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import javax.swing.BoxLayout;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -36,9 +38,12 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
+import org.jfree.chart.ChartPanel;
+
 import com.johnsoft.alg.BaseImageProc;
 import com.johnsoft.swing.DialogUtilities;
 import com.johnsoft.swing.GridBagAssembler;
+import com.johnsoft.swing.charts.MappingLineChart;
 
 /**
  * @author John Kenrinus Lee
@@ -48,8 +53,11 @@ public class FilterGreyPictureAction extends AbstractBaseFilterAction {
     @Override
     protected int[] subAction(JFrame frame, int[] data, int w, int h) {
         JDialog dialog = new JDialog(frame, true);
+        JPanel content = new JPanel(new BorderLayout());
         BaseFilterView view = new BaseFilterView(0, dialog);
-        dialog.setContentPane(view.getView(true));
+        content.add(view.getView(true), BorderLayout.CENTER);
+        content.add(view.getPreview(), BorderLayout.EAST);
+        dialog.setContentPane(content);
         dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         dialog.pack();
         dialog.setMinimumSize(dialog.getPreferredSize());
@@ -79,6 +87,8 @@ public class FilterGreyPictureAction extends AbstractBaseFilterAction {
         private JTextField llvField = newTextField("0");
         private JComboBox<String> lpField = newPolicySelect();
 
+        private ChartPanel chartPanel;
+
         private final int type;
         private Window window;
         private boolean apply;
@@ -96,10 +106,6 @@ public class FilterGreyPictureAction extends AbstractBaseFilterAction {
         }
 
         JComponent getView(boolean showButtons) {
-            JPanel panel = new JPanel();
-            BoxLayout boxLayout = new BoxLayout(panel, BoxLayout.X_AXIS);
-            panel.setLayout(boxLayout);
-
             JButton applyBtn = new JButton("Apply");
             JButton cancelBtn = new JButton("Cancel");
             if (!showButtons) {
@@ -132,6 +138,7 @@ public class FilterGreyPictureAction extends AbstractBaseFilterAction {
             filter.setSelectedIndex(0);
 
             int gap = 20;
+            JPanel panel = new JPanel();
             Color color = panel.getBackground();
             new GridBagAssembler(panel, ComponentOrientation.LEFT_TO_RIGHT)
                     .fill(GridBagAssembler.FILL_HORIZONTAL)
@@ -154,6 +161,32 @@ public class FilterGreyPictureAction extends AbstractBaseFilterAction {
                     .wrapLine().size(6, 2).add(new JScrollPane(description))
                     .size(1, 1).gridx(6).add(applyBtn).nextRow().add(cancelBtn);
 
+            return panel;
+        }
+
+        JComponent getPreview() {
+            if (chartPanel == null) {
+                chartPanel = MappingLineChart.newView();
+                chartPanel.setPreferredSize(new Dimension(300, 300));
+                chartPanel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+            }
+            JButton button = new JButton("Try");
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    if (!isFieldsInvalid() && chartPanel != null) {
+                        handleDocument(getDocument());
+                        MappingLineChart.updateData(chartPanel);
+                    }
+                }
+            });
+            JPanel panel = new JPanel();
+            new GridBagAssembler(panel, ComponentOrientation.LEFT_TO_RIGHT)
+                    .fill(GridBagAssembler.FILL_HORIZONTAL)
+                    .insets(20, 20, 0, 20)
+                    .wrapLine().add(button)
+                    .insets(0, 20, 20, 20)
+                    .wrapLine().add(chartPanel);
             return panel;
         }
 
