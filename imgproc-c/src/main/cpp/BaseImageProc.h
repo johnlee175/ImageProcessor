@@ -49,9 +49,12 @@ void calc_combine_simple_plane(int32_t *source, const int32_t *__restrict__ targ
 void calc_combine_bits_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size,
                              int32_t type, int32_t mask);
 
-void map_component_color_count(int32_t **result, int32_t  *result_size, const int32_t *__restrict__ argb, int32_t size,
-                                int32_t type);
-void simple_histogram_equalization(int32_t **result, const int32_t *__restrict__ hist, int32_t size, int32_t counts);
+void map_component_color_count(int32_t **result, int32_t  *result_size, const int32_t *__restrict__ argb,
+                               int32_t size, int32_t type);
+void histogram_equalization_classic(int32_t **result, const int32_t *__restrict__ hist, int32_t size,
+                                   int32_t counts);
+void histogram_equalization_photoshop(int32_t **result, const int32_t *__restrict__ hist, int32_t size,
+                                      int32_t counts);
 void map_component_equalization(int32_t **result, const int32_t *__restrict__ hist, int32_t hist_size,
                                 const int32_t *__restrict__ argb, int32_t size, int32_t type);
 

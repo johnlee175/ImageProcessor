@@ -28,6 +28,22 @@ import com.johnsoft.swing.SwingImageView;
  * @version 2017-07-08
  */
 public class SimpleHistEqualizeAction implements UiFace.Action {
+    private static volatile boolean sUsingPhotoshop;
+    private static final UiFace.Action algAction = new UiFace.Action() {
+        @Override
+        public void action(UiFace uiFace, UiFace.Control control) {
+            if (control.isCheckedOrSelected()) {
+                sUsingPhotoshop = true;
+            } else {
+                sUsingPhotoshop = false;
+            }
+        }
+    };
+
+    public static UiFace.Action algAction() {
+        return algAction;
+    }
+
     private final int type;
 
     public SimpleHistEqualizeAction(int type) {
@@ -57,6 +73,6 @@ public class SimpleHistEqualizeAction implements UiFace.Action {
     }
 
     protected int[] histogramEqualization(int[] data, int type) {
-        return BaseImageProc.simpleHistogramEqualization(data, type);
+        return BaseImageProc.simpleHistogramEqualization(data, type, !sUsingPhotoshop);
     }
 }

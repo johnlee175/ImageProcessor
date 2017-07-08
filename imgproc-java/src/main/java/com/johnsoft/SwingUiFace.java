@@ -162,6 +162,8 @@ public class SwingUiFace implements UiFace {
             return new PlaneSliceColorCompAction();
         } else if ("Filter-Combine-Bit-Plane".equals(command)) {
             return new PlaneCombineBitAction();
+        } else if ("Filter-Simple-Histogram-Equalization-Photoshop".equals(command)) {
+            return SimpleHistEqualizeAction.algAction();
         } else if ("Filter-Simple-Histogram-Equalization-Grey".equals(command)) {
             return new SimpleHistEqualizeAction(BaseImageProc.TYPE_GREY_COLOR);
         } else if ("Filter-Simple-Histogram-Equalization-Red".equals(command)) {

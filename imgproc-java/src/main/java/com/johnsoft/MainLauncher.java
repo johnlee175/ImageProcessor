@@ -53,6 +53,8 @@ public class MainLauncher {
                 .addMenuItem("Filter", "Combine Bit Plane",
                         face.getAction("Filter-Combine-Bit-Plane"))
                 .addSubMenu("Filter", "Simple Histogram Equalization")
+                .addCheckedMenuItem("Simple Histogram Equalization", "use photoshop alg",
+                        false, face.getAction("Filter-Simple-Histogram-Equalization-Photoshop"))
                 .addMenuItem("Simple Histogram Equalization", "Grey",
                         face.getAction("Filter-Simple-Histogram-Equalization-Grey"))
                 .addMenuItem("Simple Histogram Equalization", "Red",

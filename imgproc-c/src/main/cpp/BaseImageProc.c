@@ -166,7 +166,8 @@ void map_component_color_count(int32_t **result, int32_t  *result_size, const in
     *result = map;
 }
 
-void simple_histogram_equalization(int32_t **result, const int32_t *__restrict__ hist, int32_t size, int32_t counts) {
+void histogram_equalization_classic(int32_t **result, const int32_t *__restrict__ hist, int32_t size,
+                                   int32_t counts) {
     const size_t result_byte_size = size * sizeof(int32_t);
     int32_t *map = (int32_t *) malloc(result_byte_size);
     memset(map, 0, result_byte_size);
@@ -174,6 +175,18 @@ void simple_histogram_equalization(int32_t **result, const int32_t *__restrict__
     for (int32_t i = 0; i < size; ++i) {
         cum = cum + hist[i] / (double) counts;
         map[i] = (int32_t) round(cum * 255.0);
+    }
+    *result = map;
+}
+
+void histogram_equalization_photoshop(int32_t **result, const int32_t *__restrict__ hist, int32_t size,
+                                      int32_t counts) {
+    int32_t *map;
+    histogram_equalization_classic(&map, hist, size, counts);
+    int32_t min_val = map[0];
+    double scale = 255.0 / (255.0 - min_val);
+    for (int32_t i = 0; i < size; ++i) {
+        map[i] = (int32_t) round((map[i] - min_val) * scale);
     }
     *result = map;
 }

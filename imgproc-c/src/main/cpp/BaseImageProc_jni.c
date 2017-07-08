@@ -34,7 +34,8 @@ JNI_METHOD(jboolean, filterParam2)(JNIEnv *env, jclass klass,
                                    jint lowLevel, jint lowPolicy, jint highLevel, jint highPolicy);
 
 JNI_METHOD(jintArray, getAllColorCounts)(JNIEnv *env, jclass klass, jintArray argb, jint position);
-JNI_METHOD(jintArray, simpleHistogramEqualization)(JNIEnv *env, jclass klass, jintArray argb, jint position);
+JNI_METHOD(jintArray, simpleHistogramEqualization)(JNIEnv *env, jclass klass, jintArray argb,
+                                                   jint position, jboolean usingClassic);
 /* interface definitions end */
 
 #ifdef __cplusplus
@@ -420,7 +421,8 @@ JNI_METHOD(jintArray, getAllColorCounts)(JNIEnv *env, jclass klass, jintArray ar
     return result;
 }
 
-JNI_METHOD(jintArray, simpleHistogramEqualization)(JNIEnv *env, jclass klass, jintArray argb, jint position) {
+JNI_METHOD(jintArray, simpleHistogramEqualization)(JNIEnv *env, jclass klass, jintArray argb,
+                                                   jint position, jboolean usingClassic) {
     jsize size = (*env)->GetArrayLength(env, argb);
     jint *argb_ptr = (*env)->GetIntArrayElements(env, argb, NULL);
 
@@ -428,7 +430,11 @@ JNI_METHOD(jintArray, simpleHistogramEqualization)(JNIEnv *env, jclass klass, ji
     int32_t *data_ptr;
     int32_t length;
     map_component_color_count(&data_ptr, &length, argb_ptr, size, position);
-    simple_histogram_equalization(&map_ptr, data_ptr, length, size);
+    if (usingClassic == JNI_FALSE) {
+        histogram_equalization_photoshop(&map_ptr, data_ptr, length, size);
+    } else{
+        histogram_equalization_classic(&map_ptr, data_ptr, length, size);
+    }
     free(data_ptr);
     map_component_equalization(&data_ptr, map_ptr, length, argb_ptr, size, position);
     free(map_ptr);

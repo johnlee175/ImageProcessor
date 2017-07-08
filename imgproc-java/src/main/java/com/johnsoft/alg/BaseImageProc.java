@@ -125,5 +125,6 @@ public class BaseImageProc {
                                                                                 COMPONENT_GREEN,
                                                                                 COMPONENT_BLUE
                                                                         })
-                                                                                int position);
+                                                                                int position,
+                                                                        boolean usingClassic);
 }
