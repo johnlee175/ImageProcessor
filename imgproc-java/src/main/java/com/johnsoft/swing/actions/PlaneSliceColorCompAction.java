@@ -30,27 +30,27 @@ public class PlaneSliceColorCompAction extends AbstractPlaneSliceAction {
         int[] result;
 
         result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
-                BaseImageProc.COMPONENT_PLANE_POSITION_RED, BaseImageProc.COMPONENT_PLANE_TYPE_COLOR);
+                BaseImageProc.COMPONENT_RED, BaseImageProc.TYPE_ARGB_COLOR);
         imageViews[i++] = newImageView(result, w, h);
 
         result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
-                BaseImageProc.COMPONENT_PLANE_POSITION_GREEN, BaseImageProc.COMPONENT_PLANE_TYPE_COLOR);
+                BaseImageProc.COMPONENT_GREEN, BaseImageProc.TYPE_ARGB_COLOR);
         imageViews[i++] = newImageView(result, w, h);
 
         result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
-                BaseImageProc.COMPONENT_PLANE_POSITION_BLUE, BaseImageProc.COMPONENT_PLANE_TYPE_COLOR);
+                BaseImageProc.COMPONENT_BLUE, BaseImageProc.TYPE_ARGB_COLOR);
         imageViews[i++] = newImageView(result, w, h);
 
         result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
-                BaseImageProc.COMPONENT_PLANE_POSITION_RED, BaseImageProc.COMPONENT_PLANE_TYPE_GREY);
+                BaseImageProc.COMPONENT_RED, BaseImageProc.TYPE_GREY_COLOR);
         imageViews[i++] = newImageView(result, w, h);
 
         result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
-                BaseImageProc.COMPONENT_PLANE_POSITION_GREEN, BaseImageProc.COMPONENT_PLANE_TYPE_GREY);
+                BaseImageProc.COMPONENT_GREEN, BaseImageProc.TYPE_GREY_COLOR);
         imageViews[i++] = newImageView(result, w, h);
 
         result = BaseImageProc.colorComponentPlaneSlicing(data, w, h,
-                BaseImageProc.COMPONENT_PLANE_POSITION_BLUE, BaseImageProc.COMPONENT_PLANE_TYPE_GREY);
+                BaseImageProc.COMPONENT_BLUE, BaseImageProc.TYPE_GREY_COLOR);
         imageViews[i] = newImageView(result, w, h);
 
         return imageViews;

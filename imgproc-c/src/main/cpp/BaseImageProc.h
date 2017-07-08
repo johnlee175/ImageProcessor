@@ -3,6 +3,13 @@
 
 #include "base.h"
 
+#define TYPE_GREY_COLOR 0
+#define TYPE_ARGB_COLOR 5
+#define COMPONENT_RED 1
+#define COMPONENT_GREEN 2
+#define COMPONENT_BLUE 3
+#define COMPONENT_ALPHA 4
+
 typedef int32_t (*component_filter) (int32_t);
 typedef void (*reset_filter) ();
 
@@ -36,9 +43,16 @@ void calc_rgb_color_filter(int32_t *result, const int32_t *__restrict__ argb, in
                            component_filter r_filter, component_filter g_filter, component_filter b_filter);
 void calc_grey_bit_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size, int32_t bit_position);
 void calc_rgb_bit_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size, int32_t bit_position);
-void calc_rgb_component_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size, int32_t position, int32_t type);
+void calc_rgb_component_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size,
+                              int32_t position, int32_t type);
 void calc_combine_simple_plane(int32_t *source, const int32_t *__restrict__ target, int32_t size);
 void calc_combine_bits_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size,
                              int32_t type, int32_t mask);
+
+void map_component_color_count(int32_t **result, int32_t  *result_size, const int32_t *__restrict__ argb, int32_t size,
+                                int32_t type);
+void simple_histogram_equalization(int32_t **result, const int32_t *__restrict__ hist, int32_t size, int32_t counts);
+void map_component_equalization(int32_t **result, const int32_t *__restrict__ hist, int32_t hist_size,
+                                const int32_t *__restrict__ argb, int32_t size, int32_t type);
 
 #endif //PROJECT_BASEIMAGEPROC_H

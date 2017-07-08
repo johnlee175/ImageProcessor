@@ -52,6 +52,17 @@ public class MainLauncher {
                         face.getAction("Filter-Color-Component-Plane"))
                 .addMenuItem("Filter", "Combine Bit Plane",
                         face.getAction("Filter-Combine-Bit-Plane"))
+                .addSubMenu("Filter", "Simple Histogram Equalization")
+                .addMenuItem("Simple Histogram Equalization", "Grey",
+                        face.getAction("Filter-Simple-Histogram-Equalization-Grey"))
+                .addMenuItem("Simple Histogram Equalization", "Red",
+                        face.getAction("Filter-Simple-Histogram-Equalization-Red"))
+                .addMenuItem("Simple Histogram Equalization", "Green",
+                        face.getAction("Filter-Simple-Histogram-Equalization-Green"))
+                .addMenuItem("Simple Histogram Equalization", "Blue",
+                        face.getAction("Filter-Simple-Histogram-Equalization-Blue"))
+                .addMenuItem("Simple Histogram Equalization", "All",
+                        face.getAction("Filter-Simple-Histogram-Equalization-Color"))
                 .addMenuItem("Chart", "Histogram",
                         face.getAction("Chart-Histogram"))
                 .assemble();

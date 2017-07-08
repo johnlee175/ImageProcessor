@@ -71,7 +71,7 @@ public abstract class AbstractBaseFilterAction implements UiFace.Action {
     }
 
     protected static class BaseFilterDocument {
-        int type = BaseImageProc.FILTER_TYPE_GREY;
+        int type = BaseImageProc.TYPE_GREY_COLOR;
         int filterIndex = BaseImageProc.INDEX_NO_FILTER;
         float c = 0.0F;
         float l = 1.0F;
@@ -90,26 +90,26 @@ public abstract class AbstractBaseFilterAction implements UiFace.Action {
                                                   String prefix) {
         final int idx = filter.getSelectedIndex();
         switch (idx) {
-            case 0:
+            case BaseImageProc.INDEX_NO_FILTER:
                 description.setText(prefix + "No Parameters required!");
                 break;
-            case 1:
+            case BaseImageProc.INDEX_REVERSE_FILTER:
                 description.setText(prefix + "No Parameters required!\n"
                         + "result = 255 - value;\n"
                         + "value in [0, 255], result in [0, 255]");
                 break;
-            case 2:
+            case BaseImageProc.INDEX_LINEAR_FILTER:
                 description.setText(prefix + "result = c + l * value;");
                 break;
-            case 3:
+            case BaseImageProc.INDEX_LOG_FILTER:
                 description.setText(prefix + "result = c + l * log(value * g + 1) / (log(g + 1) + 0.001);\n"
                         + "value in [0, 1], result in [0, 1]");
                 break;
-            case 4:
+            case BaseImageProc.INDEX_GAMMA_FILTER:
                 description.setText(prefix + "result = c + l * pow(value, g);\n"
                         + "value in [0, 1], result in [0, 1]");
                 break;
-            case 5:
+            case BaseImageProc.INDEX_STRETCH_FILTER:
                 description.setText(prefix + "No Parameters required!\n"
                         + "x = 0.5 / (value + 0.05);\n"
                         + "e1 = log(1 / 0.05 - 1) / log(0.5 / 0.05);\n"
@@ -118,7 +118,7 @@ public abstract class AbstractBaseFilterAction implements UiFace.Action {
                         + "result = 1 / (1 + pow(temp, e));\n"
                         + "value in [0, 1], result in [0, 1]");
                 break;
-            case 6:
+            case BaseImageProc.INDEX_BINARY_FILTER:
                 description.setText(prefix + "h-level >= 0 && value >= h-level; then apply h-policy to value;\n"
                         + "l-level >= 0 && value <= l-level; then apply l-policy to value;\n");
                 break;

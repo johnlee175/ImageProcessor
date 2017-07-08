@@ -80,28 +80,28 @@ void calc_rgb_component_plane(int32_t *result, const int32_t *__restrict__ argb,
     int32_t comp;
     for (int32_t i = 0; i < size; ++i) {
         switch(position) {
-            case 0: /* a */
+            case COMPONENT_ALPHA:
                 result[i] = 0xFF000000;
                 break;
-            case 1: /* r */
+            case COMPONENT_RED:
                 comp = (argb[i] >> 16) & 0xFF;
-                if (type == 0) {
+                if (type == TYPE_ARGB_COLOR) {
                     result[i] = assemble_color_int(comp, 0, 0);
                 } else {
                     result[i] = grey_to_color(comp);
                 }
                 break;
-            case 2: /* g */
+            case COMPONENT_GREEN:
                 comp = (argb[i] >> 8) & 0xFF;
-                if (type == 0) {
+                if (type == TYPE_ARGB_COLOR) {
                     result[i] = assemble_color_int(0, comp, 0);
                 } else {
                     result[i] = grey_to_color(comp);
                 }
                 break;
-            case 3: /* b */
+            case COMPONENT_BLUE:
                 comp = argb[i] & 0xFF;
-                if (type == 0) {
+                if (type == TYPE_ARGB_COLOR) {
                     result[i] = assemble_color_int(0, 0, comp);
                 } else {
                     result[i] = grey_to_color(comp);
@@ -130,10 +130,77 @@ void calc_combine_simple_plane(int32_t *source, const int32_t *__restrict__ targ
 void calc_combine_bits_plane(int32_t *result, const int32_t *__restrict__ argb, int32_t size,
                              int32_t type, int32_t mask) {
     for (int32_t i = 0; i < size; ++i) {
-        if (type == 1) {
+        if (type == TYPE_GREY_COLOR) {
             result[i] = grey_to_color(color_to_grey(argb[i]) & mask);
         } else {
             result[i] = argb[i] & mask;
         }
     }
+}
+
+void map_component_color_count(int32_t **result, int32_t  *result_size, const int32_t *__restrict__ argb, int32_t size,
+                               int32_t type) {
+    *result_size = 256;
+    const size_t result_byte_size = *result_size * sizeof(int32_t);
+    int32_t *map = (int32_t *) malloc(result_byte_size);
+    memset(map, 0, result_byte_size);
+    for (int32_t i = 0; i < size; ++i) {
+        switch (type) {
+            case COMPONENT_ALPHA:
+                ++map[(argb[i] >> 24) & 0xFF];
+                break;
+            case COMPONENT_RED:
+                ++map[(argb[i] >> 16) & 0xFF];
+                break;
+            case COMPONENT_GREEN:
+                ++map[(argb[i] >> 8) & 0xFF];
+                break;
+            case COMPONENT_BLUE:
+                ++map[argb[i] & 0xFF];
+                break;
+            default:
+                ++map[color_to_grey(argb[i])];
+                break;
+        }
+    }
+    *result = map;
+}
+
+void simple_histogram_equalization(int32_t **result, const int32_t *__restrict__ hist, int32_t size, int32_t counts) {
+    const size_t result_byte_size = size * sizeof(int32_t);
+    int32_t *map = (int32_t *) malloc(result_byte_size);
+    memset(map, 0, result_byte_size);
+    double cum = 0.0;
+    for (int32_t i = 0; i < size; ++i) {
+        cum = cum + hist[i] / (double) counts;
+        map[i] = (int32_t) round(cum * 255.0);
+    }
+    *result = map;
+}
+
+void map_component_equalization(int32_t **result, const int32_t *__restrict__ hist, int32_t hist_size,
+                                const int32_t *__restrict__ argb, int32_t size, int32_t type) {
+    const size_t result_byte_size = size * sizeof(int32_t);
+    int32_t *map = (int32_t *) malloc(result_byte_size);
+    memset(map, 0, result_byte_size);
+    for (int32_t i = 0; i < size; ++i) {
+        switch (type) {
+            case COMPONENT_ALPHA:
+                map[i] = (hist[(argb[i] >> 24) & 0xFF] << 24) | (argb[i] & 0x00FFFFFF);
+                break;
+            case COMPONENT_RED:
+                map[i] = (hist[(argb[i] >> 16) & 0xFF] << 16) | (argb[i] & 0xFF00FFFF);
+                break;
+            case COMPONENT_GREEN:
+                map[i] = (hist[(argb[i] >> 8) & 0xFF] << 8) | (argb[i] & 0xFFFF00FF);
+                break;
+            case COMPONENT_BLUE:
+                map[i] = (hist[argb[i] & 0xFF]) | (argb[i] & 0xFFFFFF00);
+                break;
+            default:
+                map[i] = grey_to_color(hist[color_to_grey(argb[i])]);
+                break;
+        }
+    }
+    *result = map;
 }

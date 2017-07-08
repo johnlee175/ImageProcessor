@@ -37,6 +37,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
+import com.johnsoft.alg.BaseImageProc;
 import com.johnsoft.swing.DialogUtilities;
 import com.johnsoft.swing.JImageView;
 import com.johnsoft.swing.SwingImageView;
@@ -51,6 +52,7 @@ import com.johnsoft.swing.actions.PlaneCombineBitAction;
 import com.johnsoft.swing.actions.PlaneSliceColorBitAction;
 import com.johnsoft.swing.actions.PlaneSliceColorCompAction;
 import com.johnsoft.swing.actions.PlaneSliceGreyBitAction;
+import com.johnsoft.swing.actions.SimpleHistEqualizeAction;
 import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageReaderSpi;
 import com.twelvemonkeys.imageio.plugins.tiff.TIFFImageWriterSpi;
 
@@ -160,6 +162,16 @@ public class SwingUiFace implements UiFace {
             return new PlaneSliceColorCompAction();
         } else if ("Filter-Combine-Bit-Plane".equals(command)) {
             return new PlaneCombineBitAction();
+        } else if ("Filter-Simple-Histogram-Equalization-Grey".equals(command)) {
+            return new SimpleHistEqualizeAction(BaseImageProc.TYPE_GREY_COLOR);
+        } else if ("Filter-Simple-Histogram-Equalization-Red".equals(command)) {
+            return new SimpleHistEqualizeAction(BaseImageProc.COMPONENT_RED);
+        } else if ("Filter-Simple-Histogram-Equalization-Green".equals(command)) {
+            return new SimpleHistEqualizeAction(BaseImageProc.COMPONENT_GREEN);
+        } else if ("Filter-Simple-Histogram-Equalization-Blue".equals(command)) {
+            return new SimpleHistEqualizeAction(BaseImageProc.COMPONENT_BLUE);
+        } else if ("Filter-Simple-Histogram-Equalization-Color".equals(command)) {
+            return new SimpleHistEqualizeAction(BaseImageProc.TYPE_ARGB_COLOR);
         } else if ("Chart-Histogram".equals(command)) {
             return new ChartHistogramAction();
         }

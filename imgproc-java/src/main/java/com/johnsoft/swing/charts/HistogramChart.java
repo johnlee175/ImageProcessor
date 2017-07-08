@@ -48,7 +48,7 @@ import com.johnsoft.swing.GridBagAssembler;
  * @author John Kenrinus Lee
  * @version 2017-07-06
  */
-public class Histogram {
+public class HistogramChart {
     public static JComponent newAllTypeViews(int[] data) {
         final JPanel panel = new JPanel();
         final GridBagAssembler assembler = new GridBagAssembler(panel, ComponentOrientation.LEFT_TO_RIGHT);
@@ -68,13 +68,33 @@ public class Histogram {
     }
 
     public static JComponent newView(int[] data, Color color, boolean useColorBar) {
-        final HashMap<Integer, Integer> map = new HashMap<>();
-        makeData(map, data, color);
-        final JFreeChart chart = makeChart(makeCategoryDataset(map), useColorBar, color);
+        final JFreeChart chart = makeChart(assembleDatasetUsingC(data, color), useColorBar, color);
         final ChartPanel panel = new ChartPanel(chart, false, true,
                 false, true, true);
         panel.setPreferredSize(new Dimension(480, 320));
         return panel;
+    }
+
+    private static CategoryDataset assembleDatasetUsingJava(int[] data, Color color) {
+        final HashMap<Integer, Integer> map = new HashMap<>();
+        makeData(map, data, color);
+        return makeCategoryDataset(map);
+    }
+
+    private static CategoryDataset assembleDatasetUsingC(int[] data, Color color) {
+        final int type;
+        if (Color.RED.equals(color)) {
+            type = BaseImageProc.COMPONENT_RED;
+        } else if (Color.GREEN.equals(color)) {
+            type = BaseImageProc.COMPONENT_GREEN;
+        } else if (Color.BLUE.equals(color)) {
+            type = BaseImageProc.COMPONENT_BLUE;
+        } else if (Color.GRAY.equals(color)) {
+            type = BaseImageProc.TYPE_GREY_COLOR;
+        } else {
+            throw new IllegalArgumentException("Unknown Color!");
+        }
+        return makeCategoryDataset(BaseImageProc.getAllColorCounts(data, type));
     }
 
     private static JFreeChart makeChart(CategoryDataset dataset, boolean useColorBar, final Color color) {
@@ -129,6 +149,15 @@ public class Histogram {
         plot.setRangeGridlinePaint(Color.BLACK);
         renderer.setBarPainter(new StandardBarPainter());
         renderer.setSeriesPaint(0, color, false);
+    }
+
+    private static CategoryDataset makeCategoryDataset(int[] colorCounts) {
+        final DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        final int length = colorCounts.length;
+        for (int i = 0; i < length; ++i) {
+            dataset.addValue((Number) colorCounts[i], "Color", i);
+        }
+        return dataset;
     }
 
     private static CategoryDataset makeCategoryDataset(Map<Integer, Integer> map) {

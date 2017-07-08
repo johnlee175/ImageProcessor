@@ -55,9 +55,9 @@ public class FilterColorPictureAction extends AbstractBaseFilterAction {
     private static final Color GREEN = new Color(0, 175, 0);
     private static final Color BLUE = new Color(0, 0, 175);
 
-    private final BaseFilterGroup redGroup = new BaseFilterGroup(BaseImageProc.FILTER_TYPE_RED);
-    private final BaseFilterGroup greenGroup = new BaseFilterGroup(BaseImageProc.FILTER_TYPE_GREEN);
-    private final BaseFilterGroup blueGroup = new BaseFilterGroup(BaseImageProc.FILTER_TYPE_BLUE);
+    private final BaseFilterGroup redGroup = new BaseFilterGroup(BaseImageProc.COMPONENT_RED);
+    private final BaseFilterGroup greenGroup = new BaseFilterGroup(BaseImageProc.COMPONENT_GREEN);
+    private final BaseFilterGroup blueGroup = new BaseFilterGroup(BaseImageProc.COMPONENT_BLUE);
     private boolean applyToOrigin;
     private JImageView imageView;
     private JTextArea description;
@@ -354,11 +354,11 @@ public class FilterColorPictureAction extends AbstractBaseFilterAction {
 
     private static String getPrefix(int type) {
         switch (type) {
-            case BaseImageProc.FILTER_TYPE_RED:
+            case BaseImageProc.COMPONENT_RED:
                 return "RED:\n";
-            case BaseImageProc.FILTER_TYPE_GREEN:
+            case BaseImageProc.COMPONENT_GREEN:
                 return "GREEN:\n";
-            case BaseImageProc.FILTER_TYPE_BLUE:
+            case BaseImageProc.COMPONENT_BLUE:
                 return "BLUE:\n";
             default:
                 return "";

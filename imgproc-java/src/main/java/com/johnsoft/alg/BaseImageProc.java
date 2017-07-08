@@ -27,18 +27,12 @@ public class BaseImageProc {
         System.loadLibrary("imgproc-1.0.0");
     }
 
-    public static final int FILTER_TYPE_GREY = 0;
-    public static final int FILTER_TYPE_RED = 1;
-    public static final int FILTER_TYPE_GREEN = 2;
-    public static final int FILTER_TYPE_BLUE = 3;
-
-    public static final int COMPONENT_PLANE_POSITION_ALPHA = 0;
-    public static final int COMPONENT_PLANE_POSITION_RED = 1;
-    public static final int COMPONENT_PLANE_POSITION_GREEN = 2;
-    public static final int COMPONENT_PLANE_POSITION_BLUE = 3;
-
-    public static final int COMPONENT_PLANE_TYPE_COLOR = 0;
-    public static final int COMPONENT_PLANE_TYPE_GREY = 1;
+    public static final int TYPE_GREY_COLOR = 0;
+    public static final int TYPE_ARGB_COLOR = 5;
+    public static final int COMPONENT_RED = 1;
+    public static final int COMPONENT_GREEN = 2;
+    public static final int COMPONENT_BLUE = 3;
+    public static final int COMPONENT_ALPHA = 4;
 
     public static final int INDEX_NO_FILTER = 0;
     public static final int INDEX_REVERSE_FILTER = 1;
@@ -64,23 +58,23 @@ public class BaseImageProc {
     public static native synchronized int[] colorBitPlaneSlicing(int[] argb, int w, int h, int bitPosition);
     public static native synchronized int[] colorComponentPlaneSlicing(int[] argb, int w, int h,
                                                                        @MagicConstant(intValues = {
-                                                                               COMPONENT_PLANE_POSITION_ALPHA,
-                                                                               COMPONENT_PLANE_POSITION_RED,
-                                                                               COMPONENT_PLANE_POSITION_GREEN,
-                                                                               COMPONENT_PLANE_POSITION_BLUE
+                                                                               COMPONENT_ALPHA,
+                                                                               COMPONENT_RED,
+                                                                               COMPONENT_GREEN,
+                                                                               COMPONENT_BLUE
                                                                        })
                                                                                int position,
                                                                        @MagicConstant(intValues = {
-                                                                               COMPONENT_PLANE_TYPE_COLOR,
-                                                                               COMPONENT_PLANE_TYPE_GREY
+                                                                               TYPE_GREY_COLOR,
+                                                                               TYPE_ARGB_COLOR
                                                                        })
                                                                                int type);
 
     public static native synchronized int[] combineSimplePlane(int[][] argbs, int w, int h);
     public static native synchronized int[] combineBitsPlane(int[] argb, int w, int h,
                                                              @MagicConstant(intValues = {
-                                                                     COMPONENT_PLANE_TYPE_COLOR,
-                                                                     COMPONENT_PLANE_TYPE_GREY
+                                                                     TYPE_GREY_COLOR,
+                                                                     TYPE_ARGB_COLOR
                                                              }) int type, int mask);
 
     /**
@@ -89,7 +83,7 @@ public class BaseImageProc {
      *              4=gamma_filter, 5=stretch_filter, 6=binary_filter
      */
     public static native synchronized boolean filterIndex(
-            @MagicConstant(intValues = {FILTER_TYPE_GREY, FILTER_TYPE_RED, FILTER_TYPE_GREEN, FILTER_TYPE_BLUE})
+            @MagicConstant(intValues = {TYPE_GREY_COLOR, COMPONENT_RED, COMPONENT_GREEN, COMPONENT_BLUE})
                     int type,
             @MagicConstant(intValues = {INDEX_NO_FILTER, INDEX_REVERSE_FILTER, INDEX_LINEAR_FILTER,
                     INDEX_LOG_FILTER, INDEX_GAMMA_FILTER, INDEX_STRETCH_FILTER, INDEX_BINARY_FILTER})
@@ -114,4 +108,22 @@ public class BaseImageProc {
                                                                    BINARY_FILTER_POLICY_MAX})
                                                                    int highPolicy);
 
+    public static native synchronized int[] getAllColorCounts(int[] argb,
+                                                              @MagicConstant(intValues = {
+                                                                      TYPE_GREY_COLOR,
+                                                                      COMPONENT_ALPHA,
+                                                                      COMPONENT_RED,
+                                                                      COMPONENT_GREEN,
+                                                                      COMPONENT_BLUE
+                                                              })
+                                                                      int position);
+    public static native synchronized int[] simpleHistogramEqualization(int[] argb,
+                                                                        @MagicConstant(intValues = {
+                                                                                TYPE_GREY_COLOR,
+                                                                                COMPONENT_ALPHA,
+                                                                                COMPONENT_RED,
+                                                                                COMPONENT_GREEN,
+                                                                                COMPONENT_BLUE
+                                                                        })
+                                                                                int position);
 }

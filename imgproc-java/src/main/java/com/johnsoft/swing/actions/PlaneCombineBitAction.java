@@ -77,15 +77,15 @@ public class PlaneCombineBitAction implements UiFace.Action {
 
             final int type;
             if (checkAsGrey.isSelected()) {
-                type = BaseImageProc.COMPONENT_PLANE_TYPE_GREY;
+                type = BaseImageProc.TYPE_GREY_COLOR;
             } else {
-                type = BaseImageProc.COMPONENT_PLANE_TYPE_COLOR;
+                type = BaseImageProc.TYPE_ARGB_COLOR;
             }
 
             int mask;
             try {
                 mask = Long.valueOf(maskField.getText().trim(), 16).intValue();
-                if (type == BaseImageProc.COMPONENT_PLANE_TYPE_GREY) {
+                if (type == BaseImageProc.TYPE_GREY_COLOR) {
                     mask = mask & 0xFF;
                 } else {
                     mask = mask | 0xFF000000;

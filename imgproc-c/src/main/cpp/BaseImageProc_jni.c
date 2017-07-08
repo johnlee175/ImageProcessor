@@ -32,6 +32,9 @@ JNI_METHOD(jboolean, filterIndex)(JNIEnv *env, jclass klass, jint type, jint ind
 JNI_METHOD(jboolean, filterParam)(JNIEnv *env, jclass klass, jfloat c, jfloat l, jfloat g);
 JNI_METHOD(jboolean, filterParam2)(JNIEnv *env, jclass klass,
                                    jint lowLevel, jint lowPolicy, jint highLevel, jint highPolicy);
+
+JNI_METHOD(jintArray, getAllColorCounts)(JNIEnv *env, jclass klass, jintArray argb, jint position);
+JNI_METHOD(jintArray, simpleHistogramEqualization)(JNIEnv *env, jclass klass, jintArray argb, jint position);
 /* interface definitions end */
 
 #ifdef __cplusplus
@@ -39,11 +42,6 @@ JNI_METHOD(jboolean, filterParam2)(JNIEnv *env, jclass klass,
 #endif
 
 /* private utilities begin */
-
-#define FILTER_TYPE_GREY 0
-#define FILTER_TYPE_RED 1
-#define FILTER_TYPE_GREEN 2
-#define FILTER_TYPE_BLUE 3
 
 #define FILTER_POLICY_SAME_LEVEL 0
 #define FILTER_POLICY_MIN 1
@@ -368,16 +366,16 @@ JNI_METHOD(jintArray, combineBitsPlane)(JNIEnv *env, jclass klass, jintArray arg
 
 JNI_METHOD(jboolean, filterIndex)(JNIEnv *env, jclass klass, jint type, jint index) {
     switch (type) {
-        case FILTER_TYPE_GREY:
+        case TYPE_GREY_COLOR:
             grey_filter_reset();
             break;
-        case FILTER_TYPE_RED:
+        case COMPONENT_RED:
             red_filter_reset();
             break;
-        case FILTER_TYPE_GREEN:
+        case COMPONENT_GREEN:
             green_filter_reset();
             break;
-        case FILTER_TYPE_BLUE:
+        case COMPONENT_BLUE:
             blue_filter_reset();
             break;
         default:
@@ -403,4 +401,46 @@ JNI_METHOD(jboolean, filterParam2)(JNIEnv *env, jclass klass,
     return JNI_TRUE;
 }
 
+JNI_METHOD(jintArray, getAllColorCounts)(JNIEnv *env, jclass klass, jintArray argb, jint position) {
+    jsize size = (*env)->GetArrayLength(env, argb);
+    jint *argb_ptr = (*env)->GetIntArrayElements(env, argb, NULL);
+
+    int32_t *data_ptr;
+    int32_t length;
+    map_component_color_count(&data_ptr, &length, argb_ptr, size, position);
+
+    (*env)->ReleaseIntArrayElements(env, argb, argb_ptr, 0);
+
+    jintArray result = (*env)->NewIntArray(env, length);
+    jint *result_ptr = (*env)->GetIntArrayElements(env, result, NULL);
+    memcpy(result_ptr, data_ptr, length * sizeof(int32_t));
+    (*env)->ReleaseIntArrayElements(env, result, result_ptr, 0);
+    free(data_ptr);
+
+    return result;
+}
+
+JNI_METHOD(jintArray, simpleHistogramEqualization)(JNIEnv *env, jclass klass, jintArray argb, jint position) {
+    jsize size = (*env)->GetArrayLength(env, argb);
+    jint *argb_ptr = (*env)->GetIntArrayElements(env, argb, NULL);
+
+    int32_t *map_ptr;
+    int32_t *data_ptr;
+    int32_t length;
+    map_component_color_count(&data_ptr, &length, argb_ptr, size, position);
+    simple_histogram_equalization(&map_ptr, data_ptr, length, size);
+    free(data_ptr);
+    map_component_equalization(&data_ptr, map_ptr, length, argb_ptr, size, position);
+    free(map_ptr);
+    (*env)->ReleaseIntArrayElements(env, argb, argb_ptr, 0);
+
+    jintArray result = (*env)->NewIntArray(env, size);
+    jint *result_ptr = (*env)->GetIntArrayElements(env, result, NULL);
+    memcpy(result_ptr, data_ptr, size * sizeof(int32_t));
+
+    (*env)->ReleaseIntArrayElements(env, result, result_ptr, 0);
+    free(data_ptr);
+
+    return result;
+}
 /* interface implements end */

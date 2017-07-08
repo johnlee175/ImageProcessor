@@ -18,18 +18,22 @@ package com.johnsoft.swing.actions;
 
 import java.awt.image.BufferedImage;
 
-import javax.swing.JDialog;
-import javax.swing.JFrame;
-import javax.swing.WindowConstants;
-
 import com.johnsoft.UiFace;
-import com.johnsoft.swing.charts.HistogramChart;
+import com.johnsoft.alg.BaseImageProc;
+import com.johnsoft.swing.SwingImageView;
 
 /**
+ * 对彩色分量rgb分别做均衡化, 会产生奇异的点, 图像不和谐. 后续采用yuv空间进行亮度的均衡即可, 以后实现.
  * @author John Kenrinus Lee
- * @version 2017-07-06
+ * @version 2017-07-08
  */
-public class ChartHistogramAction implements UiFace.Action {
+public class SimpleHistEqualizeAction implements UiFace.Action {
+    private final int type;
+
+    public SimpleHistEqualizeAction(int type) {
+        this.type = type;
+    }
+
     @Override
     public void action(UiFace uiFace, UiFace.Control control) {
         final UiFace.TabPane tabPane = uiFace.getTabPane();
@@ -39,13 +43,20 @@ public class ChartHistogramAction implements UiFace.Action {
             final int h = image.getHeight();
             int[] data = new int[w * h];
             image.getRGB(0, 0, w, h, data, 0, w);
-
-            JDialog dialog = new JDialog((JFrame) null, false);
-            dialog.setContentPane(HistogramChart.newAllTypeViews(data));
-            dialog.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-            dialog.setSize(1000, 680);
-            dialog.setLocationRelativeTo(null);
-            dialog.setVisible(true);
+            if (type == BaseImageProc.TYPE_ARGB_COLOR) {
+                data = histogramEqualization(data, BaseImageProc.COMPONENT_RED);
+                data = histogramEqualization(data, BaseImageProc.COMPONENT_GREEN);
+                data = histogramEqualization(data, BaseImageProc.COMPONENT_BLUE);
+            } else {
+                data = histogramEqualization(data, type);
+            }
+            final SwingImageView resultView = new SwingImageView(w, h, data);
+            final String title = tabPane.getActiveTabIdentifier();
+            tabPane.addTabWithExistTitle(title, resultView);
         }
+    }
+
+    protected int[] histogramEqualization(int[] data, int type) {
+        return BaseImageProc.simpleHistogramEqualization(data, type);
     }
 }
