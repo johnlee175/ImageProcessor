@@ -1,7 +1,7 @@
 #ifndef PROJECT_BASEIMAGEPROC_H
 #define PROJECT_BASEIMAGEPROC_H
 
-#include "base.h"
+#include "base/base.h"
 
 #define TYPE_GREY_COLOR 0
 #define TYPE_ARGB_COLOR 5
