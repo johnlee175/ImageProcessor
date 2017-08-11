@@ -6,4 +6,4 @@
 #include "std_common.h"
 #include "env_config.h"
 
-#endif //PROJECT_BASE_H
+#endif /* PROJECT_BASE_H */

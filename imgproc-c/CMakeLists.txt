@@ -34,6 +34,9 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parame
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 
+include_directories(src/main/cpp)
+
+
 # Make sure exists JAVA_HOME global environment variable, locate at valid JDK directory, and $JAVA_HOME/bin in $PATH
 find_package(JNI REQUIRED)
 include_directories(${JAVA_INCLUDE_PATH})
@@ -79,3 +82,22 @@ target_link_libraries(
         sourceFiles
         # ${dependencies-lib}
 )
+
+
+#begin image-io
+if (UNIX)
+    include_directories(/usr/local/include)
+    link_directories(/usr/local/lib)
+endif ()
+set(CMAKE_C_STANDARD 99)
+set(SOURCE_FILES_IMGIO
+        src/main/cpp/image_io/octree_palette.c
+        src/main/cpp/image_io/bmp.c
+        src/main/cpp/image_io/tga.c
+        src/main/cpp/image_io/image_io.c
+        src/main/cpp/image_io/image_test.c)
+add_executable(image_test ${SOURCE_FILES_IMGIO})
+target_link_libraries(image_test png jpeg gif webp)
+
+file(COPY src/main/resources DESTINATION ./output/)
+#end image-io

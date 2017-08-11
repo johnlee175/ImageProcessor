@@ -13,12 +13,12 @@
 typedef int32_t (*component_filter) (int32_t);
 typedef void (*reset_filter) ();
 
-__inline__ int32_t grey_to_color(int32_t avg) {
+_inline_ int32_t grey_to_color(int32_t avg) {
     if (avg > 255) { avg = 255; } if (avg < 0) { avg = 0; } // not (avg & 0xFF)
     return (255 << 24) + (avg << 16) + (avg << 8) + avg;
 }
 
-__inline__ int32_t color_to_grey(int32_t argb) {
+_inline_ int32_t color_to_grey(int32_t argb) {
     int32_t r, g, b;
     r = (argb >> 16) & 0xFF;
     g = (argb >> 8) & 0xFF;
@@ -26,7 +26,7 @@ __inline__ int32_t color_to_grey(int32_t argb) {
     return (r * 19595 + g * 38469 + b * 7472) >> 16;
 }
 
-__inline__ int32_t assemble_color_int(int32_t r, int32_t g, int32_t b) {
+_inline_ int32_t assemble_color_int(int32_t r, int32_t g, int32_t b) {
     if (r > 255) { r = 255; } if (r < 0) { r = 0; } // not (r & 0xFF)
     if (g > 255) { g = 255; } if (g < 0) { g = 0; } // not (g & 0xFF)
     if (b > 255) { b = 255; } if (b < 0) { b = 0; } // not (b & 0xFF)
