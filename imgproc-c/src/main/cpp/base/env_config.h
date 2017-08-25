@@ -14,15 +14,34 @@
 #endif
 
 #if defined(__APPLE__) || defined(__MACH__)
-#   define is_macosx_os
+#   include <TargetConditionals.h>
+#   if TARGET_OS_IPHONE == 1 || TARGET_IPHONE_SIMULATOR == 1 || TARGET_OS_EMBEDDED == 1
+#       define is_ios_os
+#   elif TARGET_OS_MAC == 1
+#       define is_macosx_os
+#   else
+#       define is_apple_os
+#   endif
 #endif
 
 #if defined(__linux__)
 #   define is_linux_os
 #endif
 
-#if defined(__unix__) || defined(unix)
+#if defined(ANDROID) || defined(__ANDROID__)
+#define is_android_os
+#endif
+
+#if defined(__unix__) || defined(unix) || defined(__unix)
 #   define is_unix_os
+#endif
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#   define is_mingw
+#endif
+
+#if defined(__CYGWIN__) || defined(__CYGWIN32__)
+#   define is_cygwin
 #endif
 
 #if defined(__GNUC__)
@@ -94,11 +113,13 @@
 #   endif /* __FLT_EVAL_METHOD__ == 1 */
 #endif /* !defined(__FLT_EVAL_METHOD__) */
 
-#if defined(__LP64__) && __LP64__
-#   define __WORDSIZE 64
-#else /* !__LP64__ */
-#   define __WORDSIZE 32
-#endif /* defined(__LP64__) && __LP64__ */
+#if !defined(__WORDSIZE)
+#   if defined(__LP64__) && __LP64__
+#       define __WORDSIZE 64
+#   else /* !__LP64__ */
+#       define __WORDSIZE 32
+#   endif /* defined(__LP64__) && __LP64__ */
+#endif /* !defined(__WORDSIZE) */
 
 /* 7.18.1.1 Exact-width integer types */
 #if defined(C89)
@@ -129,31 +150,41 @@ typedef unsigned int        uint32_t;
 typedef unsigned long long  uint64_t;
 
 /* 7.18.2.1 Limits of exact-width integer types */
+#if !defined(INT8_MAX)
 #define INT8_MAX         127
 #define INT16_MAX        32767
 #define INT32_MAX        2147483647
 #define INT64_MAX        9223372036854775807LL
+#endif
 
+#if !defined(INT8_MIN)
 #define INT8_MIN          -128
 #define INT16_MIN         -32768
 #define INT32_MIN        (-INT32_MAX-1)
 #define INT64_MIN        (-INT64_MAX-1)
+#endif
 
+#if !defined(UINT8_MAX)
 #define UINT8_MAX         255
 #define UINT16_MAX        65535
 #define UINT32_MAX        4294967295U
 #define UINT64_MAX        18446744073709551615ULL
+#endif
 
 /* 7.18.4 Macros for integer constants */
+#if !defined(INT8_C)
 #define INT8_C(v)    (v)
 #define INT16_C(v)   (v)
 #define INT32_C(v)   (v)
 #define INT64_C(v)   (v ## LL)
+#endif
 
+#if !defined(UINT8_C)
 #define UINT8_C(v)   (v ## U)
 #define UINT16_C(v)  (v ## U)
 #define UINT32_C(v)  (v ## U)
 #define UINT64_C(v)  (v ## ULL)
+#endif
 
 #if defined(is_cpp_language)
 #   define _restrict_
@@ -221,5 +252,79 @@ typedef unsigned long long  uint64_t;
 #else /* !is_best_compiler && !is_msvc_compiler */
 #define DEPRECATED
 #endif /* defined(is_msvc_compiler) */
+
+#if defined(is_cpp_language)
+#define	__BEGIN_DECLS extern "C" {
+#define	__END_DECLS }
+#else /* !is_cpp_language */
+#define	__BEGIN_DECLS
+#define	__END_DECLS
+#endif /* defined(is_cpp_language) */
+
+#if !defined(_static_cast)
+#   define _static_cast(x) (x)
+#endif /* !defined(_static_cast) */
+#if !defined(_const_cast)
+#   define _const_cast(x) (x)
+#endif /* !defined(_const_cast) */
+#if !defined(_reinterpret_cast)
+#   define _reinterpret_cast(x) (x)
+#endif /* !defined(_reinterpret_cast) */
+
+#if defined(is_cpp_language)
+#   if !defined(__static_cast)
+#       define __static_cast(x, y) static_cast<x>(y)
+#   endif /* !defined(__static_cast) */
+#   if !defined(__const_cast)
+#       define __const_cast(x, y) const_cast<x>(y)
+#   endif /* !defined(__const_cast) */
+#   if !defined(__reinterpret_cast)
+#       define __reinterpret_cast(x, y) reinterpret_cast<x>(y)
+#   endif /* !defined(__reinterpret_cast) */
+#else /* !is_cpp_language */
+#   if !defined(__static_cast)
+#       define __static_cast(x, y) (x)y
+#   endif /* !defined(__static_cast) */
+#   if !defined(__const_cast)
+#       define __const_cast(x, y) (x)y
+#   endif /* !defined(__const_cast) */
+#   if !defined(__reinterpret_cast)
+#       define __reinterpret_cast(x, y) (x)y
+#   endif /* !defined(__reinterpret_cast) */
+#endif /* defined(is_cpp_language) */
+
+#if !defined(__UNCONST)
+#define __UNCONST(a) ((void *)(unsigned long)(const void *)(a))
+#endif /* !defined(__UNCONST) */
+
+#if !defined(is_best_compiler)
+#define __attribute__(x) /*NO-THING*/
+#endif
+
+#if defined(is_best_compiler)
+#define _nonnull(...) __attribute__((nonnull (__VA_ARGS__)))
+#else /* !is_best_compiler */
+#define _nonnull(...) /*NO-THING*/
+#endif /* defined(is_best_compiler) */
+
+#if defined(is_android_os)
+#   include <android/log.h>
+#   if !defined(LOGI)
+#       define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "System.out", __VA_ARGS__))
+#   endif /* !defined(LOGI) */
+#   if !defined(LOGW)
+#       define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "System.err", __VA_ARGS__))
+#   endif /* !defined(LOGW) */
+#else /* !is_android_os */
+#   if !defined(LOGI)
+#       define LOGI(...) ((void)fprintf(stdout, __VA_ARGS__))
+#   endif /* !defined(LOGI) */
+#   if !defined(LOGW)
+#       define LOGW(...) ((void)fprintf(stderr, __VA_ARGS__))
+#   endif /* !defined(LOGW) */
+#endif /* defined(is_android_os) */
+
+#define base_info_log(...) LOGI(__VA_ARGS__)
+#define base_error_log(...) LOGW(__VA_ARGS__)
 
 #endif /* PROJECT_ENV_CONFIG_H */

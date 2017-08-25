@@ -9,6 +9,22 @@ android {
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"
+        externalNativeBuild {
+            cmake {
+                abiFilters 'armeabi'
+                arguments '-DANDROID_STL=c++_static', '-DANDROID_DEPRECATED_HEADERS=ON',
+                        '-DANDROID_ARM_NEON=TRUE', '-DANDROID_TOOLCHAIN=clang'
+            }
+        }
+        ndk {
+            abiFilters 'armeabi'
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
     }
 }
 

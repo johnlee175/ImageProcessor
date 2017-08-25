@@ -36,6 +36,7 @@
 
         <activity android:name="com.johnsoft.imgproc.camera.CameraActivity"/>
         <activity android:name="com.johnsoft.imgproc.camera.PipActivity"/>
+        <activity android:name="com.johnsoft.imgproc.camera.NativeCameraActivity"/>
 
         <!--<activity android:name="com.johnsoft.imgproc.camera.CameraActivity"-->
                   <!--android:screenOrientation="landscape"-->

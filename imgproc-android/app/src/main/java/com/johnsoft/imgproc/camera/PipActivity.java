@@ -41,7 +41,7 @@ import android.widget.FrameLayout;
  * @author John Kenrinus Lee
  * @version 2017-08-14
  */
-public class PipActivity extends AppCompatActivity implements CameraView.OnFrameRgbaDataCallback {
+public class PipActivity extends AppCompatActivity implements CameraJavaView.OnFrameRgbaDataCallback {
     protected static final Point testSize = new Point(400, 300);
     protected static long delayMillis = 500L;
     protected static boolean globalFullScreen = true;
@@ -52,7 +52,7 @@ public class PipActivity extends AppCompatActivity implements CameraView.OnFrame
     private int frontCameraIndex;
     private volatile boolean hadFullView;
     private volatile boolean capture;
-    private CameraView.FrameCallbackThread callbackThread;
+    private CameraJavaView.FrameCallbackThread callbackThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,7 +144,7 @@ public class PipActivity extends AppCompatActivity implements CameraView.OnFrame
         if (!hadFullView) {
             hadFullView = true;
 
-            callbackThread = new CameraView.FrameCallbackThread(this, testSize.x * testSize.y * 4);
+            callbackThread = new CameraJavaView.FrameCallbackThread(this, testSize.x * testSize.y * 4);
             callbackThread.start();
 
             final FrameLayout.LayoutParams lpFront = new FrameLayout.LayoutParams(
@@ -158,15 +158,15 @@ public class PipActivity extends AppCompatActivity implements CameraView.OnFrame
                     Gravity.CENTER);
             lpBack.leftMargin = lpBack.rightMargin = lpBack.topMargin = lpBack.bottomMargin = 20;
 
-            CameraView cameraView;
+            CameraJavaView cameraView;
 
-            cameraView = new CameraView(PipActivity.this);
-            cameraView.setCameraIndex(backCameraIndex).markAsFrontCamera(false);
+            cameraView = new CameraJavaView(PipActivity.this);
+            cameraView.markCameraIndex(backCameraIndex).markAsFrontCamera(false);
             cameraView.setLayoutParams(lpBack);
             layout.addView(cameraView, 0, lpBack);
 
-            cameraView = new CameraView(PipActivity.this);
-            cameraView.setCameraIndex(frontCameraIndex).markAsFrontCamera(true)
+            cameraView = new CameraJavaView(PipActivity.this);
+            cameraView.markCameraIndex(frontCameraIndex).markAsFrontCamera(true)
                     .setOnFrameRgbaDataCallback(callbackThread);
             cameraView.setLayoutParams(lpFront);
             layout.addView(cameraView, 1, lpFront);

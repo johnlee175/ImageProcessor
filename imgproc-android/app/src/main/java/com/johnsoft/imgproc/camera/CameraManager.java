@@ -137,28 +137,41 @@ public enum CameraManager {
         void destroyShaderAndBuffer();
         void onError(Throwable thr);
         boolean isPaused();
+        void setPaused(boolean paused);
+        boolean isNative();
     }
 
     public interface SurfaceTextureHolder {
         void drawClientFrame(GLTextureViewClient client);
     }
 
-    public static class GLClientRenderThread extends Thread {
+    public interface GLClientRenderThread extends LoopThread, SurfaceTexture.OnFrameAvailableListener {
+    }
+
+    public static class GLClientRenderJavaThread extends Thread implements GLClientRenderThread {
         private final GLTextureViewClient client;
         private final SurfaceTextureHolder surfaceTextureHolder;
         private volatile boolean loop;
+        private volatile boolean available;
         private EGL10 mEgl;
         private EGLDisplay mEglDisplay;
         private EGLConfig mEglConfig;
         private EGLContext mEglContext;
         private EGLSurface mEglSurface;
 
-        public GLClientRenderThread(GLTextureViewClient client, SurfaceTextureHolder surfaceTextureHolder) {
+        public GLClientRenderJavaThread(GLTextureViewClient client, SurfaceTextureHolder surfaceTextureHolder) {
             this.client = client;
             this.surfaceTextureHolder = surfaceTextureHolder;
             this.loop = true;
+            this.available = false;
         }
 
+        @Override
+        public boolean isLoop() {
+            return loop;
+        }
+
+        @Override
         public void quit() {
             this.loop = false;
             this.interrupt();
@@ -170,50 +183,76 @@ public enum CameraManager {
         }
 
         @Override
+        public boolean isPaused() {
+            return client.isPaused();
+        }
+
+        @Override
+        public void setPaused(boolean paused) {
+            client.setPaused(paused);
+            sendNotification(null);
+        }
+
+        @Override
         public synchronized void run() {
             try {
                 initEGL(client.getSurfaceTexture());
                 client.createShaderAndBuffer();
                 while (loop) {
                     try {
-                        while (client.isPaused()) {
-                            Thread.sleep(1000L);
+                        while (isPaused()) {
+                            wait(1000L);
                         }
-                        if (surfaceTextureHolder != null) {
-                            surfaceTextureHolder.drawClientFrame(client);
-                        }
+                        surfaceTextureHolder.drawClientFrame(client);
                         if (!mEgl.eglSwapBuffers(mEglDisplay, mEglSurface)) {
                             throw new CameraManageException("Can not swap buffers");
                         }
-                        wait();
+                        while (!available) {
+                            wait(1000L);
+                        }
+                        available = false;
                     } catch (InterruptedException e) {
                         break;
                     }
                 }
             } catch (Throwable thr) {
-                client.onError(thr);
+                onError(thr);
             } finally {
                 client.destroyShaderAndBuffer();
                 releaseEGL(client.getSurfaceTexture());
             }
         }
 
-        public synchronized void doNotify() {
+        @Override
+        public void onError(Throwable thr) {
+            client.onError(thr);
+        }
+
+        @Override
+        public synchronized void sendNotification(String message) {
             notifyAll();
+        }
+
+        @Override
+        public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+            available = true;
+            sendNotification(null);
         }
 
         protected void initEGL(SurfaceTexture surfaceTexture) {
             mEgl = (EGL10) EGLContext.getEGL();
             if ((mEglDisplay = mEgl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY)) == EGL10.EGL_NO_DISPLAY) {
-                throw new CameraManageException("eglGetDisplay failed:" + GLUtils.getEGLErrorString(mEgl.eglGetError()));
+                throw new CameraManageException("eglGetDisplay failed:"
+                        + GLUtils.getEGLErrorString(mEgl.eglGetError()));
             }
             if (!mEgl.eglInitialize(mEglDisplay, new int[2])) {
-                throw new CameraManageException("eglInitialize failed:" + GLUtils.getEGLErrorString(mEgl.eglGetError()));
+                throw new CameraManageException("eglInitialize failed:"
+                        + GLUtils.getEGLErrorString(mEgl.eglGetError()));
             }
 
-            final int configsCount[] = new int[1];
-            final EGLConfig configs[] = new EGLConfig[1];
-            final int configSpec[] = new int[] {
+            final int[] configsCount = new int[1];
+            final EGLConfig[] configs = new EGLConfig[1];
+            final int[] configSpec = new int[] {
                     EGL10.EGL_COLOR_BUFFER_TYPE, EGL10.EGL_RGB_BUFFER,
                     EGL10.EGL_RED_SIZE, 8,
                     EGL10.EGL_GREEN_SIZE, 8,
@@ -229,23 +268,27 @@ public enum CameraManager {
             };
             mEgl.eglChooseConfig(mEglDisplay, configSpec, configs, 1, configsCount);
             if (configsCount[0] <= 0) {
-                throw new CameraManageException("eglChooseConfig failed:" + GLUtils.getEGLErrorString(mEgl.eglGetError()));
+                throw new CameraManageException("eglChooseConfig failed:"
+                        + GLUtils.getEGLErrorString(mEgl.eglGetError()));
             }
             mEglConfig = configs[0];
-            int contextSpec[] = new int[] {
+            int[] contextSpec = new int[] {
                     EGL14.EGL_CONTEXT_CLIENT_VERSION, 2,
                     EGL10.EGL_NONE
             };
             if ((mEglContext = mEgl.eglCreateContext(mEglDisplay, mEglConfig,
                     EGL10.EGL_NO_CONTEXT, contextSpec)) == EGL10.EGL_NO_CONTEXT) {
-                throw new CameraManageException("eglCreateContext failed: " + GLUtils.getEGLErrorString(mEgl.eglGetError()));
+                throw new CameraManageException("eglCreateContext failed:"
+                        + GLUtils.getEGLErrorString(mEgl.eglGetError()));
             }
             if ((mEglSurface = mEgl.eglCreateWindowSurface(mEglDisplay, mEglConfig, surfaceTexture,
                     null)) == EGL10.EGL_NO_SURFACE) {
-                throw new CameraManageException("eglCreateWindowSurface failed"+GLUtils.getEGLErrorString(mEgl.eglGetError()));
+                throw new CameraManageException("eglCreateWindowSurface failed:"
+                        + GLUtils.getEGLErrorString(mEgl.eglGetError()));
             }
             if (!mEgl.eglMakeCurrent(mEglDisplay, mEglSurface, mEglSurface, mEglContext)) {
-                throw new CameraManageException("eglMakeCurrent failed:"+GLUtils.getEGLErrorString(mEgl.eglGetError()));
+                throw new CameraManageException("eglMakeCurrent failed:"
+                        + GLUtils.getEGLErrorString(mEgl.eglGetError()));
             }
         }
 
@@ -261,6 +304,51 @@ public enum CameraManager {
         }
     }
 
+    public static final class GLClientRenderNativeThread implements GLClientRenderThread {
+        static {
+            System.loadLibrary("imgproc_android_camera");
+        }
+
+        private final GLTextureViewClient client;
+        private final SurfaceTextureHolder surfaceTextureHolder;
+        private long nativeContextPointer;
+
+        public GLClientRenderNativeThread(GLTextureViewClient client, SurfaceTextureHolder surfaceTextureHolder) {
+            this.client = client;
+            this.surfaceTextureHolder = surfaceTextureHolder;
+            nativeInitialized();
+        }
+
+        private native void nativeInitialized();
+
+        @Override
+        public native String getName();
+
+        @Override
+        public native boolean isLoop();
+
+        @Override
+        public native void start();
+
+        @Override
+        public native void quit();
+
+        @Override
+        public native boolean isPaused();
+
+        @Override
+        public native void setPaused(boolean paused);
+
+        @Override
+        public native void onError(Throwable thr);
+
+        @Override
+        public native void sendNotification(String message);
+
+        @Override
+        public native void onFrameAvailable(SurfaceTexture surfaceTexture);
+    }
+
     public static class GLRenderClientManager implements SurfaceTexture.OnFrameAvailableListener {
         private final Map<GLTextureViewClient, GLClientRenderThread> clientThreadMap = new HashMap<>();
         private SurfaceTextureHolder surfaceTextureHolder;
@@ -270,12 +358,23 @@ public enum CameraManager {
         }
 
         public synchronized void addGLTextureViewClient(GLTextureViewClient client) {
-            GLClientRenderThread thread = new GLClientRenderThread(client, surfaceTextureHolder);
+            if (client == null) {
+                throw new IllegalArgumentException("GLTextureViewClient client==null");
+            }
+            final GLClientRenderThread thread;
+            if (client.isNative()) {
+                thread = new GLClientRenderNativeThread(client, surfaceTextureHolder);
+            } else {
+                thread = new GLClientRenderJavaThread(client, surfaceTextureHolder);
+            }
             thread.start();
             clientThreadMap.put(client, thread);
         }
 
         public synchronized void removeGLTextureViewClient(GLTextureViewClient client) {
+            if (client == null) {
+                throw new IllegalArgumentException("GLTextureViewClient client==null");
+            }
             clientThreadMap.remove(client).quit();
         }
 
@@ -292,7 +391,7 @@ public enum CameraManager {
         @Override
         public synchronized void onFrameAvailable(SurfaceTexture surfaceTexture) {
             for (GLTextureViewClient client : clientThreadMap.keySet()) {
-                clientThreadMap.get(client).doNotify();
+                clientThreadMap.get(client).onFrameAvailable(surfaceTexture);
             }
         }
     }

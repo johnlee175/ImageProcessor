@@ -14,37 +14,33 @@
  * See the license for the specific language governing permissions and
  * limitations under the license.
  */
-package com.johnsoft.imgproc.camera;
-
-import com.johnsoft.imgproc.R;
-
-import android.content.Intent;
-import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.view.View;
-
 /**
- * Entry Activity
+ * camera native view cc interface
+ *
  * @author John Kenrinus Lee
  * @version 2017-08-18
  */
-public class MainActivity extends AppCompatActivity {
-    @Override
-    protected void onCreate(@Nullable Bundle bundle) {
-        super.onCreate(bundle);
-        setContentView(R.layout.activity_main);
-    }
+#ifndef IMGPROC_ANDROID_CCCAMERANATIVEVIEW_HPP
+#define IMGPROC_ANDROID_CCCAMERANATIVEVIEW_HPP
 
-    public void startCamera(View view) {
-        startActivity(new Intent(this, CameraActivity.class));
-    }
+#include "camera_native_view.h"
 
-    public void startPip(View view) {
-        startActivity(new Intent(this, PipActivity.class));
-    }
+class CCCameraNativeView {
+public:
+    CCCameraNativeView();
+    ~CCCameraNativeView();
+    void setUserTag(void *data);
+    void *getUserTag();
+    void setFrameSize(GLuint frame_width, GLuint frame_height);
+    void setFrontCamera(GLboolean is_front_camera);
+    void setShaderSource(const GLchar *vertex_source, const GLchar *fragment_source);
+    void createShader();
+    void destroyShader();
+    void drawFrame(GLuint texture_id);
+    void setFrameDataCallback(cnv_frame_data_callback callback_func);
+    void readPixels(GLubyte **pixels, size_t *pixels_size);
+private:
+    CameraNativeViewStruct *cnv;
+};
 
-    public void startNativeCamera(View view) {
-        startActivity(new Intent(this, NativeCameraActivity.class));
-    }
-}
+#endif //IMGPROC_ANDROID_CCCAMERANATIVEVIEW_HPP

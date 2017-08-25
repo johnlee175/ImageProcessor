@@ -14,37 +14,32 @@
  * See the license for the specific language governing permissions and
  * limitations under the license.
  */
-package com.johnsoft.imgproc.camera;
-
-import com.johnsoft.imgproc.R;
-
-import android.content.Intent;
-import android.os.Bundle;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
-import android.view.View;
-
 /**
- * Entry Activity
+ * GL client render thread cc interface
+ *
  * @author John Kenrinus Lee
  * @version 2017-08-18
  */
-public class MainActivity extends AppCompatActivity {
-    @Override
-    protected void onCreate(@Nullable Bundle bundle) {
-        super.onCreate(bundle);
-        setContentView(R.layout.activity_main);
-    }
+#ifndef IMGPROC_ANDROID_CCGLCLIENTRENDERTHREAD_HPP
+#define IMGPROC_ANDROID_CCGLCLIENTRENDERTHREAD_HPP
 
-    public void startCamera(View view) {
-        startActivity(new Intent(this, CameraActivity.class));
-    }
+#include "glclient_render_thread.h"
 
-    public void startPip(View view) {
-        startActivity(new Intent(this, PipActivity.class));
-    }
+class CCGlClientRenderThread {
+public:
+    CCGlClientRenderThread(const char *thread_name,
+                           BoolProperty **boolProperty,
+                           Drawer **drawer);
+    ~CCGlClientRenderThread();
+    void start();
+    void quit();
+    void setWindow(EGLNativeWindowType window);
+    void setAvailable(bool available);
+    bool isLoop();
+    const char *getName();
+    void handleMessage(const char *message);
+private:
+    GLClientRenderThreadStruct *glcrt;
+};
 
-    public void startNativeCamera(View view) {
-        startActivity(new Intent(this, NativeCameraActivity.class));
-    }
-}
+#endif //IMGPROC_ANDROID_CCGLCLIENTRENDERTHREAD_HPP

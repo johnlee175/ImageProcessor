@@ -249,27 +249,27 @@ public class CameraActivity extends AppCompatActivity {
                     backSize.x, backSize.y);
             final LinearLayout.LayoutParams lpFront = new LinearLayout.LayoutParams(
                     frontSize.x, frontSize.y);
-            CameraView cameraView;
+            CameraJavaView cameraView;
 
-            cameraView = new CameraView(CameraActivity.this);
-            cameraView.setCameraIndex(backCameraIndex).markAsFrontCamera(false);
+            cameraView = new CameraJavaView(CameraActivity.this);
+            cameraView.markCameraIndex(backCameraIndex).markAsFrontCamera(false);
             cameraView.setLayoutParams(lpBack);
             backLayout.addView(cameraView, 0, lpBack);
 
-            cameraView = new CameraView(CameraActivity.this);
+            cameraView = new CameraJavaView(CameraActivity.this);
             cameraView.setShaderSourceCode(null, rand.nextBoolean() ? fragShaderCode3 : fragShaderCode4);
-            cameraView.setCameraIndex(backCameraIndex).markAsFrontCamera(false);
+            cameraView.markCameraIndex(backCameraIndex).markAsFrontCamera(false);
             cameraView.setLayoutParams(lpBack);
             backLayout.addView(cameraView, 1, lpBack);
 
-            cameraView = new CameraView(CameraActivity.this);
-            cameraView.setCameraIndex(frontCameraIndex).markAsFrontCamera(true);
+            cameraView = new CameraJavaView(CameraActivity.this);
+            cameraView.markCameraIndex(frontCameraIndex).markAsFrontCamera(true);
             cameraView.setLayoutParams(lpFront);
             frontLayout.addView(cameraView, 0, lpFront);
 
-            cameraView = new CameraView(CameraActivity.this);
+            cameraView = new CameraJavaView(CameraActivity.this);
             cameraView.setShaderSourceCode(null, rand.nextBoolean() ? fragShaderCode1 : fragShaderCode2);
-            cameraView.setCameraIndex(frontCameraIndex).markAsFrontCamera(true);
+            cameraView.markCameraIndex(frontCameraIndex).markAsFrontCamera(true);
             cameraView.setLayoutParams(lpFront);
             frontLayout.addView(cameraView, 1, lpFront);
         }

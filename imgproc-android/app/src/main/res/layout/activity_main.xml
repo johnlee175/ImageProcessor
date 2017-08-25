@@ -15,4 +15,9 @@
             android:text="start PipActivity"
             android:onClick="startPip"/>
 
+    <Button android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="start NativeCameraActivity"
+            android:onClick="startNativeCamera"/>
+
 </LinearLayout>

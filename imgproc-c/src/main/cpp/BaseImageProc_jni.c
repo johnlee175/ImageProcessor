@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+#define PROJECT_PACKAGE_NAME com_johnsoft_alg
 #define CLASS_NAME BaseImageProc
 #define JNI_SYMBOL(package_name, class_name, method_name) Java_##package_name##_##class_name##_##method_name
 #define JNI_PREFIX(package_name, class_name, method_name, return_value) JNIEXPORT return_value JNICALL \
