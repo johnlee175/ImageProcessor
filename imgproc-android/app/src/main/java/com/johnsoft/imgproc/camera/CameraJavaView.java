@@ -118,8 +118,8 @@ public class CameraJavaView extends CameraView {
 
     /** not for user call */
     @Override
-    public final boolean isNative() {
-        return false;
+    public final long getNativeContextPointer() {
+        return 0L;
     }
 
     /** not for user call */
@@ -239,103 +239,6 @@ public class CameraJavaView extends CameraView {
             bb.order(ByteOrder.nativeOrder());
             mPixelByteBuffer = bb;
             mPixelByteBuffer.position(0);
-        }
-    }
-
-    public static class FrameCallbackThread extends Thread
-            implements CameraView.OnFrameRgbaDataCallback, LoopThread {
-        private final OnFrameRgbaDataCallback callback;
-        private final ByteBuffer buffer;
-        private volatile boolean loop;
-        private volatile boolean paused;
-        private volatile boolean busy;
-
-        public FrameCallbackThread(OnFrameRgbaDataCallback callback, int capacity) {
-            this.callback = callback;
-            this.buffer = ByteBuffer.allocateDirect(capacity);
-            this.buffer.order(ByteOrder.nativeOrder());
-            this.buffer.clear();
-            this.loop = true;
-            this.paused = false;
-            this.busy = false;
-        }
-
-        @Override
-        public boolean isLoop() {
-            return loop;
-        }
-
-        @Override
-        public void quit() {
-            this.loop = false;
-            interrupt();
-            try {
-                join(1000L);
-            } catch (InterruptedException e) {
-                /* ignored */
-            }
-        }
-
-        @Override
-        public boolean isPaused() {
-            return paused;
-        }
-
-        @Override
-        public void setPaused(boolean paused) {
-            this.paused = paused;
-            sendNotification(null);
-        }
-
-        @Override
-        public void run() {
-            try {
-                while (loop) {
-                    while (isPaused()) {
-                        synchronized(this) {
-                            wait(1000L);
-                        }
-                    }
-                    while (!busy) {
-                        synchronized(this) {
-                            wait(1000L);
-                        }
-                    }
-                    buffer.flip();
-                    try {
-                        callback.onFrameRgbaData(buffer);
-                    } catch (Throwable thr) {
-                        thr.printStackTrace();
-                    }
-                    buffer.clear();
-                    busy = false;
-                }
-            } catch (InterruptedException e) {
-                onError(e);
-            } finally {
-                /* Notice the direct byte buffer not be freed! */
-                System.out.println("FrameCallbackThread quit!");
-            }
-        }
-
-        @Override
-        public void onError(Throwable thr) {
-            thr.printStackTrace();
-        }
-
-        @Override
-        public synchronized void sendNotification(String message) {
-            notifyAll();
-        }
-
-        @Override
-        public void onFrameRgbaData(ByteBuffer rgba) {
-            if (!busy) {
-                buffer.put(rgba);
-                rgba.rewind();
-                busy = true;
-                sendNotification(null);
-            }
         }
     }
 }

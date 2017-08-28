@@ -38,6 +38,7 @@ import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.util.SparseArray;
+import android.view.Surface;
 
 /**
  * Camera Manager
@@ -138,7 +139,7 @@ public enum CameraManager {
         void onError(Throwable thr);
         boolean isPaused();
         void setPaused(boolean paused);
-        boolean isNative();
+        long getNativeContextPointer();
     }
 
     public interface SurfaceTextureHolder {
@@ -304,49 +305,110 @@ public enum CameraManager {
         }
     }
 
-    public static final class GLClientRenderNativeThread implements GLClientRenderThread {
+    public static class GLClientRenderNativeThread extends Thread implements GLClientRenderThread {
         static {
             System.loadLibrary("imgproc_android_camera");
         }
 
         private final GLTextureViewClient client;
         private final SurfaceTextureHolder surfaceTextureHolder;
-        private long nativeContextPointer;
+        private volatile boolean loop;
+        private volatile boolean available;
 
         public GLClientRenderNativeThread(GLTextureViewClient client, SurfaceTextureHolder surfaceTextureHolder) {
             this.client = client;
             this.surfaceTextureHolder = surfaceTextureHolder;
-            nativeInitialized();
+            this.loop = true;
+            this.available = false;
         }
 
-        private native void nativeInitialized();
+        @Override
+        public boolean isLoop() {
+            return loop;
+        }
 
         @Override
-        public native String getName();
+        public void quit() {
+            this.loop = false;
+            this.interrupt();
+            try {
+                this.join(1000L);
+            } catch (InterruptedException e) {
+                /* ignored */
+            }
+        }
 
         @Override
-        public native boolean isLoop();
+        public boolean isPaused() {
+            return client.isPaused();
+        }
 
         @Override
-        public native void start();
+        public void setPaused(boolean paused) {
+            client.setPaused(paused);
+            sendNotification(null);
+        }
 
         @Override
-        public native void quit();
+        public synchronized void run() {
+            Surface surface = null;
+            try {
+                surface = new Surface(client.getSurfaceTexture());
+                if (!createEGL(surface)) {
+                    throw new CameraManageException("Can not swap buffers");
+                }
+                client.createShaderAndBuffer();
+                while (loop) {
+                    try {
+                        while (isPaused()) {
+                            wait(1000L);
+                        }
+                        surfaceTextureHolder.drawClientFrame(client);
+                        if (!swapBuffers()) {
+                            throw new CameraManageException("Can not swap buffers");
+                        }
+                        while (!available) {
+                            wait(1000L);
+                        }
+                        available = false;
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            } catch (Throwable thr) {
+                onError(thr);
+            } finally {
+                client.destroyShaderAndBuffer();
+                destroyEGL(surface);
+                if (surface != null) {
+                    surface.release();
+                }
+            }
+        }
 
         @Override
-        public native boolean isPaused();
+        public void onError(Throwable thr) {
+            client.onError(thr);
+        }
 
         @Override
-        public native void setPaused(boolean paused);
+        public synchronized void sendNotification(String message) {
+            notifyAll();
+        }
 
         @Override
-        public native void onError(Throwable thr);
+        public void onFrameAvailable(SurfaceTexture surfaceTexture) {
+            available = true;
+            sendNotification(null);
+        }
 
-        @Override
-        public native void sendNotification(String message);
+        private long getNativeContextPointer() {
+            return client.getNativeContextPointer();
+        }
 
-        @Override
-        public native void onFrameAvailable(SurfaceTexture surfaceTexture);
+        private native boolean swapBuffers();
+        private native boolean createEGL(Surface surface);
+        private native void destroyEGL(Surface surface);
     }
 
     public static class GLRenderClientManager implements SurfaceTexture.OnFrameAvailableListener {
@@ -362,7 +424,7 @@ public enum CameraManager {
                 throw new IllegalArgumentException("GLTextureViewClient client==null");
             }
             final GLClientRenderThread thread;
-            if (client.isNative()) {
+            if (client.getNativeContextPointer() != 0L) {
                 thread = new GLClientRenderNativeThread(client, surfaceTextureHolder);
             } else {
                 thread = new GLClientRenderJavaThread(client, surfaceTextureHolder);

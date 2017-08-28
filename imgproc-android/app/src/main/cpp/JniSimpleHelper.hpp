@@ -25,11 +25,20 @@
 
 #include <jni.h>
 
+#define JNI_INSTANCE_PARAM JNIEnv *env, jobject thiz
+#define JNI_CLASS_PARAM JNIEnv *env, jclass klass
+
 #define jnicchelper_field_id(field_name, field_sign) \
 env->GetFieldID(env->GetObjectClass(thiz), field_name, field_sign)
 
 #define jnicchelper_method_id(method_name, method_sign) \
 env->GetMethodID(env->GetObjectClass(thiz), method_name, method_sign)
+
+#define jnicchelper_obj_field_id(obj, field_name, field_sign) \
+env->GetFieldID(env->GetObjectClass(obj), field_name, field_sign)
+
+#define jnicchelper_obj_method_id(obj, method_name, method_sign) \
+env->GetMethodID(env->GetObjectClass(obj), method_name, method_sign)
 
 /* Example: jnicchelper_get_field("nativeContextPointer", "J", Long); */
 #define jnicchelper_get_field(field_name, field_sign, type_cap) \
@@ -73,6 +82,10 @@ env->GetObjectClass(thiz), "nativeContextPointer", "J"))
 #define jnicchelper_set_native_ctx_ptr(env, thiz, ptr) \
 env->SetLongField(thiz, env->GetFieldID(\
 env->GetObjectClass(thiz), "nativeContextPointer", "J"), ptr)
+
+#define jnicchelper_call_native_ctx_ptr(env, thiz) \
+env->CallLongMethod(thiz, env->GetMethodID(\
+env->GetObjectClass(thiz), "getNativeContextPointer", "()J"))
 
 #define jnicchelper_from_utf_string(env, str) \
 env->GetStringUTFChars(str, JNI_FALSE)

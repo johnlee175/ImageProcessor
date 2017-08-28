@@ -15,7 +15,7 @@
  * limitations under the license.
  */
 /**
- * jni simple helper interface
+ * jni simple helper c interface
  *
  * @author John Kenrinus Lee
  * @version 2017-08-18
@@ -25,11 +25,20 @@
 
 #include <jni.h>
 
+#define JNI_INSTANCE_PARAM JNIEnv *env, jobject thiz
+#define JNI_CLASS_PARAM JNIEnv *env, jclass klass
+
 #define jnihelper_field_id(field_name, field_sign) \
 (*env)->GetFieldID(env, (*env)->GetObjectClass(env, thiz), field_name, field_sign)
 
 #define jnihelper_method_id(method_name, method_sign) \
 (*env)->GetMethodID(env, (*env)->GetObjectClass(env, thiz), method_name, method_sign)
+
+#define jnihelper_obj_field_id(obj, field_name, field_sign) \
+(*env)->GetFieldID(env, (*env)->GetObjectClass(env, obj), field_name, field_sign)
+
+#define jnihelper_obj_method_id(obj, method_name, method_sign) \
+(*env)->GetMethodID(env, (*env)->GetObjectClass(env, obj), method_name, method_sign)
 
 /* Example: jnihelper_get_field("nativeContextPointer", "J", Long); */
 #define jnihelper_get_field(field_name, field_sign, type_cap) \
@@ -73,6 +82,10 @@
 #define jnihelper_set_native_ctx_ptr(env, thiz, ptr) \
 (*env)->SetLongField(env, thiz, (*env)->GetFieldID(env, \
 (*env)->GetObjectClass(env, thiz), "nativeContextPointer", "J"), ptr)
+
+#define jnihelper_call_native_ctx_ptr(env, thiz) \
+(*env)->CallLongMethod(env, thiz, (*env)->GetMethodID(env, \
+(*env)->GetObjectClass(env, thiz), "getNativeContextPointer", "()J"))
 
 #define jnihelper_from_utf_string(env, str) \
 (*env)->GetStringUTFChars(env, str, JNI_FALSE)

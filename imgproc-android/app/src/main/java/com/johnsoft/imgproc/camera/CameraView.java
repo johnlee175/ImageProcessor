@@ -17,6 +17,7 @@
 package com.johnsoft.imgproc.camera;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
@@ -161,5 +162,105 @@ public abstract class CameraView extends TextureView
     public interface OnFrameRgbaDataCallback {
         /** this method should be processed quickly to make sure extract frame smoothly */
         void onFrameRgbaData(ByteBuffer rgba);
+    }
+
+    public static class FrameCallbackThread extends Thread
+            implements CameraView.OnFrameRgbaDataCallback, LoopThread {
+        private final OnFrameRgbaDataCallback callback;
+        private final DirectByteBuffers.DirectMemory directMemory;
+        private final ByteBuffer buffer;
+        private volatile boolean loop;
+        private volatile boolean paused;
+        private volatile boolean busy;
+
+        public FrameCallbackThread(OnFrameRgbaDataCallback callback, int capacity,
+                                   DirectByteBuffers.DirectMemory directMemory) {
+            this.callback = callback;
+            this.directMemory = directMemory;
+            this.buffer = directMemory.mallocDirect(capacity);
+            this.buffer.order(ByteOrder.nativeOrder());
+            this.buffer.clear();
+            this.loop = true;
+            this.paused = false;
+            this.busy = false;
+        }
+
+        @Override
+        public boolean isLoop() {
+            return loop;
+        }
+
+        @Override
+        public void quit() {
+            this.loop = false;
+            interrupt();
+            try {
+                join(1000L);
+            } catch (InterruptedException e) {
+                /* ignored */
+            }
+        }
+
+        @Override
+        public boolean isPaused() {
+            return paused;
+        }
+
+        @Override
+        public void setPaused(boolean paused) {
+            this.paused = paused;
+            sendNotification(null);
+        }
+
+        @Override
+        public void run() {
+            try {
+                while (loop) {
+                    while (isPaused()) {
+                        synchronized(this) {
+                            wait(1000L);
+                        }
+                    }
+                    while (!busy) {
+                        synchronized(this) {
+                            wait(1000L);
+                        }
+                    }
+                    buffer.flip();
+                    try {
+                        callback.onFrameRgbaData(buffer);
+                    } catch (Throwable thr) {
+                        thr.printStackTrace();
+                    }
+                    buffer.clear();
+                    busy = false;
+                }
+            } catch (InterruptedException e) {
+                onError(e);
+            } finally {
+                directMemory.freeDirect(buffer);
+                System.out.println("FrameCallbackThread quit!");
+            }
+        }
+
+        @Override
+        public void onError(Throwable thr) {
+            thr.printStackTrace();
+        }
+
+        @Override
+        public synchronized void sendNotification(String message) {
+            notifyAll();
+        }
+
+        @Override
+        public void onFrameRgbaData(ByteBuffer rgba) {
+            if (!busy) {
+                buffer.put(rgba);
+                rgba.rewind();
+                busy = true;
+                sendNotification(null);
+            }
+        }
     }
 }

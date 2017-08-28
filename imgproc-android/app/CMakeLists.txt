@@ -4,10 +4,8 @@ cmake_minimum_required(VERSION 3.4.2)
 include_directories(../../imgproc-c/src/main/cpp/base)
 
 add_library(imgproc_android_camera SHARED
-    src/main/cpp/glclient_render_thread.c
-    src/main/cpp/CCGlClientRenderThread.cpp
-    src/main/cpp/camera_native_view.c
-    src/main/cpp/CCCameraNativeView.cpp
+    src/main/cpp/gl_render_camera_box.c
+    src/main/cpp/CCGLRenderCameraBox.cpp
     src/main/cpp/imgproc_android_camera_jni.c
     #src/main/cpp/ImgProcAndroidCameraJni.cpp
 )

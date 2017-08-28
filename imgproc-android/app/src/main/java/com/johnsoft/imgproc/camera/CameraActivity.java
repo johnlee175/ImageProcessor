@@ -16,8 +16,6 @@
  */
 package com.johnsoft.imgproc.camera;
 
-import static com.johnsoft.imgproc.camera.CameraManager.singleInstance;
-
 import java.util.Random;
 
 import android.content.pm.ActivityInfo;
@@ -42,7 +40,7 @@ import android.widget.ScrollView;
  * @version 2017-08-14
  */
 public class CameraActivity extends AppCompatActivity {
-    private static final String fragShaderCode1 = ""
+    public static final String fragShaderCode1 = ""
             + "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
             + "varying vec2 vTextureCoord;\n"
@@ -54,7 +52,7 @@ public class CameraActivity extends AppCompatActivity {
             + "  }\n"
             + "  gl_FragColor = texture2D(sTexture, uv);\n"
             + "}";
-    private static final String fragShaderCode2 = ""
+    public static final String fragShaderCode2 = ""
             + "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
             + "varying vec2 vTextureCoord;\n"
@@ -63,7 +61,7 @@ public class CameraActivity extends AppCompatActivity {
             + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
             + "  gl_FragColor = vec4(1.0-color.r, 1.0-color.g, 1.0-color.b, 1.0);\n"
             + "}";
-    private static final String fragShaderCode3 = ""
+    public static final String fragShaderCode3 = ""
             + "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
             + "varying vec2 vTextureCoord;\n"
@@ -75,7 +73,7 @@ public class CameraActivity extends AppCompatActivity {
             + "  float monoColor = dot(color.rgb,monoMultiplier);\n"
             + "  gl_FragColor = vec4(clamp(vec3(monoColor, monoColor, monoColor)*sepiaToneFactor, 0.0, 1.0), 1.0);\n"
             + "}";
-    private static final String fragShaderCode4 = ""
+    public static final String fragShaderCode4 = ""
             + "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
             + "varying vec2 vTextureCoord;\n"
@@ -112,7 +110,7 @@ public class CameraActivity extends AppCompatActivity {
     private LinearLayout frontLayout;
     private int backCameraIndex;
     private int frontCameraIndex;
-    private boolean hadFullView;
+    private volatile boolean hadFullView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -151,15 +149,15 @@ public class CameraActivity extends AppCompatActivity {
         frontCameraIndex = CameraManager.cameraIndex(true);
         CameraManager.singleInstance.flag(backCameraIndex, true, true, false);
         CameraManager.singleInstance.flag(frontCameraIndex, true, true, false);
-        singleInstance.open(backCameraIndex, previewSizeChooser);
-        singleInstance.open(frontCameraIndex, previewSizeChooser);
+        CameraManager.singleInstance.open(backCameraIndex, previewSizeChooser);
+        CameraManager.singleInstance.open(frontCameraIndex, previewSizeChooser);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        singleInstance.close(backCameraIndex);
-        singleInstance.close(frontCameraIndex);
+        CameraManager.singleInstance.close(backCameraIndex);
+        CameraManager.singleInstance.close(frontCameraIndex);
     }
 
     @Override
@@ -168,8 +166,8 @@ public class CameraActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                singleInstance.startPreview(backCameraIndex);
-                singleInstance.startPreview(frontCameraIndex);
+                CameraManager.singleInstance.startPreview(backCameraIndex);
+                CameraManager.singleInstance.startPreview(frontCameraIndex);
                 fullCameraViews();
             }
         }, delayMillis);
@@ -181,8 +179,8 @@ public class CameraActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                singleInstance.stopPreview(backCameraIndex);
-                singleInstance.stopPreview(frontCameraIndex);
+                CameraManager.singleInstance.stopPreview(backCameraIndex);
+                CameraManager.singleInstance.stopPreview(frontCameraIndex);
             }
         }, delayMillis);
     }
@@ -249,7 +247,7 @@ public class CameraActivity extends AppCompatActivity {
                     backSize.x, backSize.y);
             final LinearLayout.LayoutParams lpFront = new LinearLayout.LayoutParams(
                     frontSize.x, frontSize.y);
-            CameraJavaView cameraView;
+            CameraView cameraView;
 
             cameraView = new CameraJavaView(CameraActivity.this);
             cameraView.markCameraIndex(backCameraIndex).markAsFrontCamera(false);

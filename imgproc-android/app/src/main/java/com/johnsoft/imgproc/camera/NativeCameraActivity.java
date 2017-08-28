@@ -1,6 +1,9 @@
 package com.johnsoft.imgproc.camera;
 
-import static com.johnsoft.imgproc.camera.CameraManager.singleInstance;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
@@ -10,6 +13,7 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -21,14 +25,18 @@ import android.widget.FrameLayout;
  * @author John Kenrinus Lee
  * @version 2017-08-18
  */
-public class NativeCameraActivity extends AppCompatActivity {
+public class NativeCameraActivity extends AppCompatActivity implements CameraView.OnFrameRgbaDataCallback {
+    protected static int NH = 960;
+    protected static int NW = 1280;
     protected static long delayMillis = 500L;
     protected static boolean globalFullScreen = true;
 
     private Handler handler;
     private int cameraIndex;
     private FrameLayout layout;
-    private boolean hadFullView;
+    private volatile boolean hadFullView;
+    private volatile boolean capture;
+    private CameraView.FrameCallbackThread callbackThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,16 +70,17 @@ public class NativeCameraActivity extends AppCompatActivity {
         hadFullView = false;
 
         final CameraManager.DefaultPreviewSizeChooser previewSizeChooser = new CameraManager
-                .DefaultPreviewSizeChooser(1280, 960);
+                .DefaultPreviewSizeChooser(NW, NH);
         cameraIndex = CameraManager.cameraIndex(false);
-        singleInstance.flag(cameraIndex, true, true, false);
-        singleInstance.open(cameraIndex, previewSizeChooser);
+        CameraManager.singleInstance.flag(cameraIndex, true, true, false);
+        CameraManager.singleInstance.open(cameraIndex, previewSizeChooser);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        singleInstance.close(cameraIndex);
+        CameraManager.singleInstance.close(cameraIndex);
+        callbackThread.quit();
     }
 
     @Override
@@ -80,7 +89,7 @@ public class NativeCameraActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                singleInstance.startPreview(cameraIndex);
+                CameraManager.singleInstance.startPreview(cameraIndex);
                 fullCameraViews();
             }
         }, delayMillis);
@@ -92,9 +101,43 @@ public class NativeCameraActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                singleInstance.stopPreview(cameraIndex);
+                CameraManager.singleInstance.stopPreview(cameraIndex);
             }
         }, delayMillis);
+    }
+
+    @Override
+    public void onFrameRgbaData(ByteBuffer rgba) {
+        if (capture) {
+            capture = false;
+            try {
+                final String filePath = "/sdcard/nctest" + System.currentTimeMillis()
+                        + "_le_" + NW + 'x' + NH + ".rgba";
+                final FileChannel channel = new RandomAccessFile(filePath, "rwd").getChannel();
+                channel.write(rgba);
+                channel.close();
+                Log.i("NativeCameraActivity", "Capture rgba data in " + filePath);
+            } catch (IOException e) {
+                Log.w("NativeCameraActivity", e);
+            }
+        }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
+            capture = true;
+            return true;
+        }
+        return super.onKeyUp(keyCode, event);
     }
 
     private void fullContentView() {
@@ -111,7 +154,10 @@ public class NativeCameraActivity extends AppCompatActivity {
     private void fullCameraViews() {
         if (!hadFullView) {
             hadFullView = true;
-            Point size = singleInstance.getFrameSize(cameraIndex);
+            callbackThread = new CameraView.FrameCallbackThread(this,
+                    NW * NH * 4, DirectByteBuffers.createNativeDirectMemory());
+            callbackThread.start();
+            Point size = CameraManager.singleInstance.getFrameSize(cameraIndex);
             if (size == null) {
                 Log.w("CameraActivity", "camera frame size return null!");
                 size = new Point(0, 0);
@@ -119,8 +165,10 @@ public class NativeCameraActivity extends AppCompatActivity {
             final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                     size.x, size.y);
             lp.gravity = Gravity.CENTER;
-            final CameraNativeView cameraView = new CameraNativeView(NativeCameraActivity.this);
+            final CameraView cameraView = new CameraNativeView(NativeCameraActivity.this);
             cameraView.markCameraIndex(cameraIndex).markAsFrontCamera(false);
+            cameraView.setShaderSourceCode(null, CameraActivity.fragShaderCode2);
+            cameraView.setOnFrameRgbaDataCallback(callbackThread);
             cameraView.setLayoutParams(lp);
             layout.addView(cameraView, 0, lp);
         }
