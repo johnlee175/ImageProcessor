@@ -21,6 +21,7 @@ import java.nio.ByteOrder;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+import android.support.annotation.Keep;
 import android.util.AttributeSet;
 import android.view.TextureView;
 
@@ -38,6 +39,7 @@ import android.view.TextureView;
  * @author John Kenrinus Lee
  * @version 2017-08-14
  */
+@Keep
 public abstract class CameraView extends TextureView
         implements TextureView.SurfaceTextureListener, CameraManager.GLTextureViewClient {
     private boolean isPaused;

@@ -18,11 +18,14 @@ package com.johnsoft.imgproc.camera;
 
 import java.nio.ByteBuffer;
 
+import android.support.annotation.Keep;
+
 /**
  * Define DirectMemory, and make factory
  * @author John Kenrinus Lee
  * @version 2017-08-18
  */
+@Keep
 public class DirectByteBuffers {
     public interface DirectMemory {
         ByteBuffer mallocDirect(int capacity);
@@ -41,6 +44,7 @@ public class DirectByteBuffers {
         }
     }
 
+    @Keep
     public static class NativeDirectMemory implements DirectMemory {
         static {
             System.loadLibrary("imgproc_android_camera");

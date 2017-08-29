@@ -25,8 +25,11 @@
 
 #include "gl_render_camera_box.h"
 
+namespace camerabox {
+
 class CCGLRenderCameraBox;
 
+// TODO Not use function pointer, use abstract callback class instead
 typedef void (*CCFrameDataCallback)(CCGLRenderCameraBox *glrcbox);
 
 class CCGLRenderCameraBox {
@@ -57,5 +60,7 @@ private:
     void *data; // user tag
     CCFrameDataCallback callback;
 };
+
+}
 
 #endif //IMGPROC_ANDROID_CCGLRENDERCAMERABOX_H

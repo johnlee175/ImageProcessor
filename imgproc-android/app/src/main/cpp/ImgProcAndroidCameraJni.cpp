@@ -24,6 +24,8 @@
 #include "CCGLRenderCameraBox.hpp"
 #include <android/native_window_jni.h>
 
+// TODO Not use C-style struct, use class mix JNICCGLRenderCameraBox and callback_func
+
 struct JNICCGLRenderCameraBox {
     JavaVM *vm;
     jmethodID method;
@@ -35,7 +37,7 @@ struct JNICCGLRenderCameraBox {
     const char *fragmentShaderSource;
 };
 
-static void callback_func(CCGLRenderCameraBox *glrcbox) {
+static void callback_func(camerabox::CCGLRenderCameraBox *glrcbox) {
     void *data = glrcbox->GetUserTag();
     struct JNICCGLRenderCameraBox *jni_glrcbox = __static_cast(struct JNICCGLRenderCameraBox *, data);
 
@@ -50,7 +52,7 @@ static void callback_func(CCGLRenderCameraBox *glrcbox) {
 
 JNI_METHOD(jboolean, CameraManager_00024GLClientRenderNativeThread, swapBuffers)(JNI_INSTANCE_PARAM) {
     jlong ptr = jnicchelper_call_native_ctx_ptr(env, thiz);
-    CCGLRenderCameraBox *glrcbox = __reinterpret_cast(CCGLRenderCameraBox *, ptr);
+    camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
 
     if (glrcbox->SwapBuffers() < 0) {
         LOGW("call SwapBuffers() failed\n");
@@ -62,7 +64,7 @@ JNI_METHOD(jboolean, CameraManager_00024GLClientRenderNativeThread, swapBuffers)
 JNI_METHOD(jboolean, CameraManager_00024GLClientRenderNativeThread, createEGL)(JNI_INSTANCE_PARAM,
                                                                                jobject surface) {
     jlong ptr = jnicchelper_call_native_ctx_ptr(env, thiz);
-    CCGLRenderCameraBox *glrcbox = __reinterpret_cast(CCGLRenderCameraBox *, ptr);
+    camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
 
     if (glrcbox->SetWindow(ANativeWindow_fromSurface(env, surface)) < 0) {
         LOGW("call SetWindow() failed\n");
@@ -78,7 +80,7 @@ JNI_METHOD(jboolean, CameraManager_00024GLClientRenderNativeThread, createEGL)(J
 JNI_METHOD(void, CameraManager_00024GLClientRenderNativeThread, destroyEGL)(JNI_INSTANCE_PARAM,
                                                                             jobject surface) {
     jlong ptr = jnicchelper_call_native_ctx_ptr(env, thiz);
-    CCGLRenderCameraBox *glrcbox = __reinterpret_cast(CCGLRenderCameraBox *, ptr);
+    camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
 
     if (glrcbox->DestroyEGL() < 0) {
         LOGW("call DestroyEGL() failed\n");
@@ -93,7 +95,7 @@ JNI_METHOD(void, CameraManager_00024GLClientRenderNativeThread, destroyEGL)(JNI_
 /* ============================ CameraNativeView ============================ */
 
 JNI_METHOD(void, CameraNativeView, nativeInitialized)(JNI_INSTANCE_PARAM) {
-    CCGLRenderCameraBox *glrcbox = new CCGLRenderCameraBox;
+    camerabox::CCGLRenderCameraBox *glrcbox = new camerabox::CCGLRenderCameraBox;
     if (!glrcbox->IsInitSuccess()) {
         jnicchelper_throw_exception(env, CAMERA_MANAGE_EXCEPTION,
                                     "nativeInitialized native method execute error");
@@ -122,7 +124,7 @@ JNI_METHOD(void, CameraNativeView, createShaderAndBuffer)(JNI_INSTANCE_PARAM) {
     }
 
     jlong ptr = jnicchelper_get_native_ctx_ptr(env, thiz);
-    CCGLRenderCameraBox *glrcbox = __reinterpret_cast(CCGLRenderCameraBox *, ptr);
+    camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
 
     void *data = glrcbox->GetUserTag();
     struct JNICCGLRenderCameraBox *jni_glrcbox = __static_cast(struct JNICCGLRenderCameraBox *, data);
@@ -159,7 +161,7 @@ JNI_METHOD(void, CameraNativeView, createShaderAndBuffer)(JNI_INSTANCE_PARAM) {
 
 JNI_METHOD(void, CameraNativeView, destroyShaderAndBuffer)(JNI_INSTANCE_PARAM) {
     jlong ptr = jnicchelper_get_native_ctx_ptr(env, thiz);
-    CCGLRenderCameraBox *glrcbox = __reinterpret_cast(CCGLRenderCameraBox *, ptr);
+    camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
 
     void *data = glrcbox->GetUserTag();
     struct JNICCGLRenderCameraBox *jni_glrcbox = __static_cast(struct JNICCGLRenderCameraBox *, data);
@@ -191,7 +193,7 @@ JNI_METHOD(void, CameraNativeView, destroyShaderAndBuffer)(JNI_INSTANCE_PARAM) {
 
 JNI_METHOD(void, CameraNativeView, drawFrame)(JNI_INSTANCE_PARAM, jint textureId) {
     jlong ptr = jnicchelper_get_native_ctx_ptr(env, thiz);
-    CCGLRenderCameraBox *glrcbox = __reinterpret_cast(CCGLRenderCameraBox *, ptr);
+    camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
 
     if (glrcbox->DrawFrame(__static_cast(GLuint, textureId)) < 0) {
         jnicchelper_throw_exception(env, CAMERA_MANAGE_EXCEPTION,
@@ -204,7 +206,7 @@ JNI_METHOD(jobject/* CameraView */, CameraNativeView, setShaderSourceCode)(JNI_I
                                                                            jstring vertexSource,
                                                                            jstring fragmentSource) {
     jlong ptr = jnicchelper_get_native_ctx_ptr(env, thiz);
-    CCGLRenderCameraBox *glrcbox = __reinterpret_cast(CCGLRenderCameraBox *, ptr);
+    camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
 
     void *data = glrcbox->GetUserTag();
     struct JNICCGLRenderCameraBox *jni_glrcbox = __static_cast(struct JNICCGLRenderCameraBox *, data);

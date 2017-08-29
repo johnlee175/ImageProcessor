@@ -24,6 +24,7 @@ import java.nio.ShortBuffer;
 import android.content.Context;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
+import android.support.annotation.Keep;
 import android.util.AttributeSet;
 
 /**
@@ -40,6 +41,7 @@ import android.util.AttributeSet;
  * @author John Kenrinus Lee
  * @version 2017-08-14
  */
+@Keep
 public class CameraJavaView extends CameraView {
     private static final float[] vertexCoords = {
             -1.0f, 1.0f, 0.0f, // top left

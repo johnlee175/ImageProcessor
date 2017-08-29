@@ -37,6 +37,7 @@ import android.hardware.Camera;
 import android.opengl.EGL14;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
+import android.support.annotation.Keep;
 import android.util.SparseArray;
 import android.view.Surface;
 
@@ -45,6 +46,7 @@ import android.view.Surface;
  * @author John Kenrinus Lee
  * @version 2017-08-14
  */
+@Keep
 public enum CameraManager {
     singleInstance;
 
@@ -305,6 +307,7 @@ public enum CameraManager {
         }
     }
 
+    @Keep
     public static class GLClientRenderNativeThread extends Thread implements GLClientRenderThread {
         static {
             System.loadLibrary("imgproc_android_camera");

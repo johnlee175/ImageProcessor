@@ -16,11 +16,14 @@
  */
 package com.johnsoft.imgproc.camera;
 
+import android.support.annotation.Keep;
+
 /**
  * Loop thread interface for imgproc-android camera module
  * @author John Kenrinus Lee
  * @version 2017-08-18
  */
+@Keep
 public interface LoopThread {
     void start();
     void quit();

@@ -17,6 +17,7 @@
 package com.johnsoft.imgproc.camera;
 
 import android.content.Context;
+import android.support.annotation.Keep;
 import android.util.AttributeSet;
 
 /**
@@ -33,6 +34,7 @@ import android.util.AttributeSet;
  * @author John Kenrinus Lee
  * @version 2017-08-14
  */
+@Keep
 public class CameraNativeView extends CameraView {
     static {
         System.loadLibrary("imgproc_android_camera");
