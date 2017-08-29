@@ -101,7 +101,9 @@ public class PipActivity extends AppCompatActivity implements CameraView.OnFrame
         super.onDestroy();
         CameraManager.singleInstance.close(backCameraIndex);
         CameraManager.singleInstance.close(frontCameraIndex);
-        callbackThread.quit();
+        if (callbackThread != null) {
+            callbackThread.quit();
+        }
     }
 
     @Override

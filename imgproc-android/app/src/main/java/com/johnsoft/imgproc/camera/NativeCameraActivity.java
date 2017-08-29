@@ -80,7 +80,9 @@ public class NativeCameraActivity extends AppCompatActivity implements CameraVie
     protected void onDestroy() {
         super.onDestroy();
         CameraManager.singleInstance.close(cameraIndex);
-        callbackThread.quit();
+        if (callbackThread != null) {
+            callbackThread.quit();
+        }
     }
 
     @Override
