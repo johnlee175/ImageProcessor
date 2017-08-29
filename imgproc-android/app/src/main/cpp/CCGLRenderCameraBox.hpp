@@ -46,6 +46,7 @@ public:
     int DestroyShader();
     int DrawFrame(GLuint textureId);
     int SetWindow(EGLNativeWindowType window);
+    EGLNativeWindowType GetWindow();
     int SwapBuffers();
     int CreateEGL();
     int DestroyEGL();

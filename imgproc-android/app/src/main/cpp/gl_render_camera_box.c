@@ -392,6 +392,13 @@ int glrcbox_set_window(GLRenderCameraBox *glrcbox, EGLNativeWindowType window) {
     return -1;
 }
 
+EGLNativeWindowType glrcbox_get_window(GLRenderCameraBox *glrcbox) {
+    if (glrcbox) {
+        return glrcbox->egl_window;
+    }
+    return NULL;
+}
+
 int glrcbox_swap_buffers(GLRenderCameraBox *glrcbox) {
     if (!glrcbox || !eglSwapBuffers(glrcbox->egl_display, glrcbox->egl_surface)) {
         LOGW("Can not swap buffers\n");

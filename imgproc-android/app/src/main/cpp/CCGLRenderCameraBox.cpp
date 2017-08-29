@@ -88,6 +88,10 @@ int CCGLRenderCameraBox::SetWindow(EGLNativeWindowType window) {
     return glrcbox_set_window(this->glrcbox, window);
 }
 
+EGLNativeWindowType CCGLRenderCameraBox::GetWindow() {
+    return glrcbox_get_window(this->glrcbox);
+}
+
 int CCGLRenderCameraBox::SwapBuffers() {
     return glrcbox_swap_buffers(this->glrcbox);
 }

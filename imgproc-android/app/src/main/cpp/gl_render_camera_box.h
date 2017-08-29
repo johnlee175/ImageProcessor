@@ -65,6 +65,7 @@ extern int glrcbox_create_shader(GLRenderCameraBox *glrcbox);
 extern int glrcbox_destroy_shader(GLRenderCameraBox *glrcbox);
 extern int glrcbox_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id);
 extern int glrcbox_set_window(GLRenderCameraBox *glrcbox, EGLNativeWindowType window);
+extern EGLNativeWindowType glrcbox_get_window(GLRenderCameraBox *glrcbox);
 extern int glrcbox_swap_buffers(GLRenderCameraBox *glrcbox);
 extern int glrcbox_create_egl(GLRenderCameraBox *glrcbox);
 extern int glrcbox_destroy_egl(GLRenderCameraBox *glrcbox);

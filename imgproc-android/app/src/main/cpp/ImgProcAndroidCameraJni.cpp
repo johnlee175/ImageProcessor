@@ -83,6 +83,10 @@ JNI_METHOD(void, CameraManager_00024GLClientRenderNativeThread, destroyEGL)(JNI_
     if (glrcbox->DestroyEGL() < 0) {
         LOGW("call DestroyEGL() failed\n");
     }
+    EGLNativeWindowType window = glrcbox->GetWindow();
+    if (window) {
+        ANativeWindow_release(window);
+    }
     delete glrcbox;
 }
 
