@@ -17,6 +17,7 @@
 package com.johnsoft.imgproc.camera;
 
 import com.johnsoft.imgproc.R;
+import com.johnsoft.imgproc.camera.simple.SimpleCameraActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -46,5 +47,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void startNativeCamera(View view) {
         startActivity(new Intent(this, NativeCameraActivity.class));
+    }
+
+    public void startSimpleCamera(View view) {
+        startActivity(new Intent(this, SimpleCameraActivity.class));
     }
 }

@@ -13,7 +13,8 @@ android {
             cmake {
                 abiFilters 'armeabi'
                 arguments '-DANDROID_STL=c++_static', '-DANDROID_DEPRECATED_HEADERS=ON',
-                        '-DANDROID_ARM_NEON=TRUE', '-DANDROID_TOOLCHAIN=clang'
+                        '-DANDROID_ARM_NEON=TRUE', '-DANDROID_TOOLCHAIN=clang',
+                        '-DANDROID_PIE=ON', '-DANDROID_ARM_MODE=arm'
             }
         }
         ndk {

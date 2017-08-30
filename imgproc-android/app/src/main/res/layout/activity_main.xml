@@ -20,4 +20,9 @@
             android:text="start NativeCameraActivity"
             android:onClick="startNativeCamera"/>
 
+    <Button android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="start SimpleCameraActivity"
+            android:onClick="startSimpleCamera"/>
+
 </LinearLayout>

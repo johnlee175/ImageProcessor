@@ -34,6 +34,10 @@ extern "C" {
 
 /* Begin: you can custom const variable with define GLRCBOX_CONSTANT_DEFINED */
 extern const GLfloat glrcbox_vertex_coords[];
+/*
+ * TODO using fragment shader source to fix front camera upside down bug, not coords!
+ * TODO see SimpleCameraView
+ */
 extern const GLfloat glrcbox_back_texture_coords[];
 extern const GLfloat glrcbox_front_texture_coords[];
 extern const GLushort glrcbox_draw_order[];
