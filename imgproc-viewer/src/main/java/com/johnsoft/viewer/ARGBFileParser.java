@@ -17,8 +17,10 @@
 package com.johnsoft.viewer;
 
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_ARGB8888;
+import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_BGR_3BYTE;
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_RGB565;
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_RGBA8888;
+import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_RGB_3BYTE;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -50,6 +52,8 @@ public final class ARGBFileParser extends FileParser {
                 skipLength = frameIndex * (width * height) * 2/* unsigned short */;
             } else if (format == FORMAT_RGBA8888 || format == FORMAT_ARGB8888) {
                 skipLength = frameIndex * (width * height) * 4/* unsigned int */;
+            } else if (format == FORMAT_RGB_3BYTE || format == FORMAT_BGR_3BYTE) {
+                skipLength = frameIndex * (width * height) * 3/* 3 byte */;
             } else {
                 throw new IllegalStateException("Logical error!");
             }
@@ -87,6 +91,16 @@ public final class ARGBFileParser extends FileParser {
                             color = raw;
                         }
                             break;
+                        case FORMAT_RGB_3BYTE: {
+                            color = convertRgb888ToArgb8888(input.readUnsignedByte(), input.readUnsignedByte(),
+                                    input.readUnsignedByte(), endianMatches);
+                            break;
+                        }
+                        case FORMAT_BGR_3BYTE: {
+                            color = convertBgr888ToArgb8888(input.readUnsignedByte(), input.readUnsignedByte(),
+                                    input.readUnsignedByte(), endianMatches);
+                            break;
+                        }
                         default:
                             throw new IllegalStateException("Logical error!");
                     }
@@ -193,6 +207,14 @@ public final class ARGBFileParser extends FileParser {
         return (r * 76 + g * 151 + b * 28) >> 8;
     }
 
+    public static int convertBgr888ToArgb8888(int b, int g, int r, boolean endianMatches) {
+        return ((255 & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF) << 0);
+    }
+
+    public static int convertRgb888ToArgb8888(int r, int g, int b, boolean endianMatches) {
+        return ((255 & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | ((b & 0xFF) << 0);
+    }
+
     public static void convertRgb888FileToArgb8888File(File file, int width, int height, boolean isLittleEndian) {
         DataInputStream channelIn = null;
         DataOutputStream channelOut = null;
@@ -232,7 +254,47 @@ public final class ARGBFileParser extends FileParser {
         }
     }
 
+    public static void convertBgr888FileToArgb8888File(File file, int width, int height, boolean isLittleEndian) {
+        DataInputStream channelIn = null;
+        DataOutputStream channelOut = null;
+        try {
+            final int length = width * height * 3;
+            final boolean isLittleEndianHost = ByteOrder.LITTLE_ENDIAN.equals(ByteOrder.nativeOrder());
+            final byte[] buffer = new byte[length];
+            channelIn = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+            channelOut = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file.getAbsolutePath()
+                    + ".argb")));
+            while (channelIn.read(buffer) == buffer.length) {
+                for (int i = 0; i < length; i += 3) {
+                    int color = convertArgbToColor(255, buffer[i + 2], buffer[i + 1], buffer[i]);
+                    if (isLittleEndian != isLittleEndianHost) {
+                        color = convertByteOrderUnsignedInteger(color);
+                    }
+                    channelOut.writeInt(color);
+                }
+            }
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        } finally {
+            if (channelIn != null) {
+                try {
+                    channelIn.close();
+                } catch (IOException ignored) {
+                    // do nothing
+                }
+            }
+            if (channelOut != null) {
+                try {
+                    channelOut.close();
+                } catch (IOException ignored) {
+                    // do nothing
+                }
+            }
+        }
+    }
+
     public static void main(String[] args) {
-        convertRgb888FileToArgb8888File(new File("convert/susheview_le_640x480.rgb24"), 640, 480, true);
+        // convertRgb888FileToArgb8888File(new File("convert/susheview_le_640x480.rgb24"), 640, 480, true);
+        // convertBgr888FileToArgb8888File(new File("convert/dosn1_le_480x360.bgr24"), 480, 360, true);
     }
 }

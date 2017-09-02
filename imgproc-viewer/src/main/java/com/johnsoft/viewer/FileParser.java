@@ -19,7 +19,9 @@ package com.johnsoft.viewer;
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_A;
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_ARGB8888;
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_B;
+import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_BGR_3BYTE;
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_G;
+import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_RGB_3BYTE;
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_YUV;
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_NV21;
 import static com.johnsoft.viewer.FileParser.FileHead.FORMAT_NV42;
@@ -71,6 +73,8 @@ public abstract class FileParser {
         public static final int FORMAT_ARGB8888 = 1;
         public static final int FORMAT_RGBA8888 = 2;
         public static final int FORMAT_RGB565 = 4;
+        public static final int FORMAT_RGB_3BYTE = 8;
+        public static final int FORMAT_BGR_3BYTE = 16;
 
         public static final int FORMAT_YUV420P = 1001;
         public static final int FORMAT_YUV422P = 1002;
@@ -108,7 +112,7 @@ public abstract class FileParser {
         if (file == null || !file.exists()) {
             throw new IllegalArgumentException("input file is null or not exists!");
         }
-        FileParser fileParser;
+        FileParser fileParser = null;
         FileHead head = new FileHead();
         head.file = file;
         String name = file.getName();
@@ -123,6 +127,12 @@ public abstract class FileParser {
         } else if (formatStr.equals("rgb")) {
             fileParser = new ARGBFileParser();
             head.format = FORMAT_RGB565;
+        } else if (formatStr.equals("rgb24")) {
+            fileParser = new ARGBFileParser();
+            head.format = FORMAT_RGB_3BYTE;
+        } else if (formatStr.equals("bgr24")) {
+            fileParser = new ARGBFileParser();
+            head.format = FORMAT_BGR_3BYTE;
         } else if (formatStr.equals("yuv420p") || formatStr.equals("i420")) {
             fileParser = new YCbCrFileParser();
             head.format = FORMAT_YUV420P;
@@ -227,6 +237,10 @@ public abstract class FileParser {
                 break;
             case FORMAT_RGB565:
                 frameSize = (width * height) * 2/* unsigned short */;
+                break;
+            case FORMAT_RGB_3BYTE:
+            case FORMAT_BGR_3BYTE:
+                frameSize = (width * height) * 3/* 3 byte */;
                 break;
             case FORMAT_YUV420P:
             case FORMAT_YV12:
