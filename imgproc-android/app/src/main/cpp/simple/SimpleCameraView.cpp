@@ -142,6 +142,27 @@ void SimpleCameraView::AssembleEglErrorString(GLint error, const char *prefix, c
     }
 }
 
+void SimpleCameraView::UpsideDownBuffer(GLubyte *pixels, GLuint width, GLuint height, GLuint channels) {
+    if (pixels) {
+        const size_t row_size = static_cast<size_t>(width * channels);
+        GLubyte *temp_row_pixels = static_cast<GLubyte *>(malloc(row_size));
+        if (temp_row_pixels) {
+            GLint i = 0, j = height - 1, temp_unit = -1;
+            void *temp_ptr_i = NULL, *temp_ptr_j = NULL;
+            while(i < j) {
+                temp_unit = width * channels;
+                temp_ptr_i = &pixels[i * temp_unit];
+                temp_ptr_j = &pixels[j * temp_unit];
+                memcpy(temp_row_pixels, temp_ptr_j, row_size);
+                memcpy(temp_ptr_j, temp_ptr_i, row_size);
+                memcpy(temp_ptr_i, temp_row_pixels, row_size);
+                ++i, --j;
+            }
+            free(temp_row_pixels);
+        }
+    }
+}
+
 bool SimpleCameraView::CreateEgl() {
     char buffer[256];
     if ((this->egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY)) == EGL_NO_DISPLAY) {
@@ -337,6 +358,8 @@ bool SimpleCameraView::DrawFrame() {
     if (this->frame_data_callback && this->pixels) {
         glReadPixels(0, 0, this->frame_width, this->frame_height,
                      GL_RGBA, GL_UNSIGNED_BYTE, this->pixels);
+        // Open GL (0,0) at lower left corner
+        SimpleCameraView::UpsideDownBuffer(this->pixels, this->frame_width, this->frame_height, 4);
         this->frame_data_callback->onDataCallback(this);
     }
     return true;

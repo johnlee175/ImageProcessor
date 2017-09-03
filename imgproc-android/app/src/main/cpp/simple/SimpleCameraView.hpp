@@ -73,6 +73,7 @@ private:
     FragmentShaderType fragment_shader_type;
 private:
     static void AssembleEglErrorString(GLint error, const char *prefix, char *buffer);
+    static void UpsideDownBuffer(GLubyte *pixels, GLuint width, GLuint height, GLuint channels);
 
     static const GLfloat vertex_coords[];
     static const GLfloat texture_coords[];

@@ -132,6 +132,29 @@ static void glrcbox_egl_error_string(GLint error, const char *prefix, char *buff
     }
 }
 
+static int glrcbox_upside_down(GLubyte *pixels, GLuint width, GLuint height, GLuint channels) {
+    if (pixels) {
+        size_t row_size = _static_cast(size_t) (width * channels);
+        GLubyte *temp_row_pixels = _static_cast(GLubyte *) malloc(row_size);
+        if (temp_row_pixels) {
+            GLint i = 0, j = height - 1, temp_unit = -1;
+            void *temp_ptr_i = NULL, *temp_ptr_j = NULL;
+            while(i < j) {
+                temp_unit = width * channels;
+                temp_ptr_i = &pixels[i * temp_unit];
+                temp_ptr_j = &pixels[j * temp_unit];
+                memcpy(temp_row_pixels, temp_ptr_j, row_size);
+                memcpy(temp_ptr_j, temp_ptr_i, row_size);
+                memcpy(temp_ptr_i, temp_row_pixels, row_size);
+                ++i, --j;
+            }
+            free(temp_row_pixels);
+            return 0;
+        }
+    }
+    return -1;
+}
+
 GLRenderCameraBox *glrcbox_create_initialize() {
     GLRenderCameraBox *glrcbox = _static_cast(GLRenderCameraBox *)
             malloc(sizeof(GLRenderCameraBox));
@@ -376,6 +399,9 @@ int glrcbox_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id) {
         if (glrcbox->frame_data_callback && glrcbox->pixels) {
             glReadPixels(0, 0, glrcbox->frame_width, glrcbox->frame_height,
                          GL_RGBA, GL_UNSIGNED_BYTE, glrcbox->pixels);
+            /* Open GL (0,0) at lower left corner */
+            glrcbox_upside_down(glrcbox->pixels, glrcbox->frame_width, glrcbox->frame_height,
+                                4 /* RGBA */);
             glrcbox->frame_data_callback(glrcbox);
         }
 
