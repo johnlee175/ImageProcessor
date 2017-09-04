@@ -57,6 +57,11 @@ const GLchar *SimpleCameraView::fragment_shader_source = ""
         "  gl_FragColor = texture2D(sTexture, vTextureCoord);\n"
         "}";
 
+// TODO we has three way to show image-filtered texture to user, and save normal texture to callback
+// TODO 1. create two SimpleCameraView to layout in same position, image-filtered's bigger than normal one so that hidden normal
+// TODO 2. create image-filtered fragment shader and program, re-draw frame after draw with normal fragment shader and program
+// TODO 3. create offscreen EGL environment(using eglCreatePbufferSurface()) and draw the normal one.
+
 const GLchar *SimpleCameraView::fragment_shader_source_x = ""
         "#extension GL_OES_EGL_image_external : require\n"
         "precision mediump float;\n"
