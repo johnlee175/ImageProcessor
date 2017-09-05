@@ -29,8 +29,11 @@ namespace camerabox {
 
 class CCGLRenderCameraBox;
 
-// TODO Not use function pointer, use abstract callback class instead
-typedef void (*CCFrameDataCallback)(CCGLRenderCameraBox *glrcbox);
+class CCFrameDataCallback {
+public:
+    virtual ~CCFrameDataCallback() { }
+    virtual void OnDataCallback(CCGLRenderCameraBox *glrcbox) = 0;
+};
 
 class CCGLRenderCameraBox {
 public:
@@ -53,12 +56,12 @@ public:
     int SwapBuffers();
     int CreateEGL();
     int DestroyEGL();
-    int SetFrameDataCallback(CCFrameDataCallback callbackFunc);
-    CCFrameDataCallback GetFrameDataCallback();
+    int SetFrameDataCallback(CCFrameDataCallback *callbackFunc);
+    CCFrameDataCallback *GetFrameDataCallback();
 private:
     GLRenderCameraBox *glrcbox;
     void *data; // user tag
-    CCFrameDataCallback callback;
+    CCFrameDataCallback *callback;
 };
 
 }

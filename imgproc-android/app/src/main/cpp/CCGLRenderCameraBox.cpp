@@ -26,9 +26,9 @@ static void MyFrameDataCallback(GLRenderCameraBox *glrcbox) {
     void *data = glrcbox_get_user_tag(glrcbox);
     camerabox::CCGLRenderCameraBox *box = __static_cast(camerabox::CCGLRenderCameraBox *, data);
     if (box) {
-        camerabox::CCFrameDataCallback callback = box->GetFrameDataCallback();
+        camerabox::CCFrameDataCallback *callback = box->GetFrameDataCallback();
         if (callback) {
-            callback(box);
+            callback->OnDataCallback(box);
         }
     }
 }
@@ -104,11 +104,11 @@ int camerabox::CCGLRenderCameraBox::DestroyEGL() {
     return glrcbox_destroy_egl(this->glrcbox);
 }
 
-int camerabox::CCGLRenderCameraBox::SetFrameDataCallback(camerabox::CCFrameDataCallback callbackFunc) {
+int camerabox::CCGLRenderCameraBox::SetFrameDataCallback(camerabox::CCFrameDataCallback *callbackFunc) {
     this->callback = callbackFunc;
     return glrcbox_set_frame_data_callback(this->glrcbox, MyFrameDataCallback);
 }
 
-camerabox::CCFrameDataCallback camerabox::CCGLRenderCameraBox::GetFrameDataCallback() {
+camerabox::CCFrameDataCallback *camerabox::CCGLRenderCameraBox::GetFrameDataCallback() {
     return this->callback;
 }
