@@ -54,9 +54,6 @@ public class CameraNativeView extends CameraView {
 
     private native void nativeInitialized();
 
-    @Override
-    public native CameraView setShaderSourceCode(String vertexSource, String fragmentSource);
-
     /** not for user call */
     @Override
     public native void createShaderAndBuffer();

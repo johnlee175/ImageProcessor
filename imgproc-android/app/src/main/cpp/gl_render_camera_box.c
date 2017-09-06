@@ -35,20 +35,11 @@ const GLfloat glrcbox_vertex_coords[] = {
 
 /* texture coordinate in android OpenGL es:
    is not from bottom left to top right, just from top left to bottom right! */
-const GLfloat glrcbox_back_texture_coords[] = { /* rotate 0 degree */
+const GLfloat glrcbox_texture_coords[] = {
         0.0f, 0.0f, /* top left */
         0.0f, 1.0f, /* bottom left */
         1.0f, 1.0f, /* bottom right */
         1.0f, 0.0f, /* top right */
-};
-
-/* texture coordinate in android OpenGL es:
-   is not from bottom left to top right, just from top left to bottom right! */
-const GLfloat glrcbox_front_texture_coords[] = { /* rotate 180 degree */
-        1.0f, 1.0f, /* bottom right */
-        1.0f, 0.0f, /* top right */
-        0.0f, 0.0f, /* top left */
-        0.0f, 1.0f, /* bottom left */
 };
 
 const GLushort glrcbox_draw_order[] = { 0, 1, 2, 0, 2, 3 };
@@ -64,13 +55,35 @@ const GLchar *glrcbox_vertex_shader_source = ""
         "  gl_Position = aPosition;\n"
         "  vTextureCoord = aTextureCoord;\n"
         "}";
+/* if change shader source code, search replace_target in this file */
 const GLchar *glrcbox_fragment_shader_source = ""
         "#extension GL_OES_EGL_image_external : require\n"
         "precision mediump float;\n"
         "varying vec2 vTextureCoord;\n"
         "uniform samplerExternalOES sTexture;\n"
         "void main() {\n"
-        "  gl_FragColor = texture2D(sTexture, vTextureCoord);\n"
+        "  vec2 vTexture = vTextureCoord;\n"
+        "  gl_FragColor = texture2D(sTexture, vTexture);\n"
+        "}";
+const GLchar *glrcbox_fragment_shader_source_x = ""
+        "#extension GL_OES_EGL_image_external : require\n"
+        "precision mediump float;\n"
+        "varying vec2 vTextureCoord;\n"
+        "uniform samplerExternalOES sTexture;\n"
+        "void main() {\n"
+        "  vec2 vTexture = vTextureCoord;\n"
+        "  vTexture.x = 1.0 - vTexture.x;\n"
+        "  gl_FragColor = texture2D(sTexture, vTexture);\n"
+        "}";
+const GLchar *glrcbox_fragment_shader_source_y = ""
+        "#extension GL_OES_EGL_image_external : require\n"
+        "precision mediump float;\n"
+        "varying vec2 vTextureCoord;\n"
+        "uniform samplerExternalOES sTexture;\n"
+        "void main() {\n"
+        "  vec2 vTexture = vTextureCoord;\n"
+        "  vTexture.y = 1.0 - vTexture.y;\n"
+        "  gl_FragColor = texture2D(sTexture, vTexture);\n"
         "}";
 
 #endif /* GLRCBOX_CONSTANT_DEFINED */
@@ -81,12 +94,11 @@ struct tagGLRenderCameraBox {
     EGLConfig egl_config;
     EGLContext egl_context;
     EGLSurface egl_surface;
-    GLuint program;
-    GLuint vertex_shader;
-    GLuint fragment_shader;
+    GLuint normal_program;
+    GLuint filter_program;
     const GLchar *vertex_shader_source;
     const GLchar *fragment_shader_source;
-    GLboolean is_front_camera;
+    enum FragmentShaderType fragment_shader_type;
     GLuint frame_width;
     GLuint frame_height;
     GLubyte *pixels;
@@ -137,12 +149,11 @@ static int glrcbox_upside_down(GLubyte *pixels, GLuint width, GLuint height, GLu
         size_t row_size = _static_cast(size_t) (width * channels);
         GLubyte *temp_row_pixels = _static_cast(GLubyte *) malloc(row_size);
         if (temp_row_pixels) {
-            GLint i = 0, j = height - 1, temp_unit = -1;
+            GLint i = 0, j = height - 1;
             void *temp_ptr_i = NULL, *temp_ptr_j = NULL;
             while(i < j) {
-                temp_unit = width * channels;
-                temp_ptr_i = &pixels[i * temp_unit];
-                temp_ptr_j = &pixels[j * temp_unit];
+                temp_ptr_i = &pixels[i * row_size];
+                temp_ptr_j = &pixels[j * row_size];
                 memcpy(temp_row_pixels, temp_ptr_j, row_size);
                 memcpy(temp_ptr_j, temp_ptr_i, row_size);
                 memcpy(temp_ptr_i, temp_row_pixels, row_size);
@@ -153,6 +164,24 @@ static int glrcbox_upside_down(GLubyte *pixels, GLuint width, GLuint height, GLu
         }
     }
     return -1;
+}
+
+static void glrcbox_replace_string_once_with(char *_restrict_ out, size_t out_size,
+                                             const char *_restrict_ origin,
+                                             const char *_restrict_ pattern,
+                                             const char *_restrict_ replacement) {
+    if (out && origin && pattern) {
+        memset(out, 0, out_size);
+        const char *ptr = strstr(origin, pattern);
+        if (ptr) {
+            char *dst = strncpy(out, origin, ptr - origin) + (ptr - origin);
+            dst = strncpy(dst, replacement, strlen(replacement)) + strlen(replacement);
+            const char *retain = ptr + strlen(pattern);
+            strncpy(dst, retain, strlen(retain));
+        } else {
+            strncpy(out, origin, strlen(origin));
+        }
+    }
 }
 
 GLRenderCameraBox *glrcbox_create_initialize() {
@@ -220,9 +249,10 @@ int glrcbox_set_frame_size(GLRenderCameraBox *glrcbox,
     return -1;
 }
 
-int glrcbox_set_front_camera(GLRenderCameraBox *glrcbox, GLboolean is_front_camera) {
+int glrcbox_set_fragment_shader_type(GLRenderCameraBox *glrcbox,
+                                     enum FragmentShaderType fragment_shader_type) {
     if (glrcbox) {
-        glrcbox->is_front_camera = is_front_camera;
+        glrcbox->fragment_shader_type = fragment_shader_type;
         return 0;
     }
     return -1;
@@ -253,100 +283,181 @@ int glrcbox_get_pixels(GLRenderCameraBox *glrcbox,
     return -1;
 }
 
-int glrcbox_create_shader(GLRenderCameraBox *glrcbox) {
+static int glrcbox_do_create_shader(GLRenderCameraBox *glrcbox, GLboolean normal) {
     if (glrcbox) {
-        if (!glrcbox->vertex_shader_source) {
-            glrcbox->vertex_shader_source = glrcbox_vertex_shader_source;
-        }
-        if (!glrcbox->fragment_shader_source) {
-            glrcbox->fragment_shader_source = glrcbox_fragment_shader_source;
-        }
-        if ((glrcbox->vertex_shader = glCreateShader(GL_VERTEX_SHADER)) == GL_FALSE) {
-            LOGW("error occurs in glCreateShader()\n");
-            return -1;
-        }
-        if ((glrcbox->fragment_shader = glCreateShader(GL_FRAGMENT_SHADER)) == GL_FALSE) {
-            LOGW("error occurs in glCreateShader()\n");
-            return -1;
-        }
-        glShaderSource(glrcbox->vertex_shader, 1,
-                       &glrcbox->vertex_shader_source, NULL);
-        glShaderSource(glrcbox->fragment_shader, 1,
-                       &glrcbox->fragment_shader_source, NULL);
+        LOGI("do create shader (normal=%d)", normal);
         GLint status, log_length;
-        glCompileShader(glrcbox->vertex_shader);
-        glGetShaderiv(glrcbox->vertex_shader, GL_COMPILE_STATUS, &status);
-        if (status != GL_TRUE) {
-            glGetShaderiv(glrcbox->vertex_shader, GL_INFO_LOG_LENGTH, &log_length);
+        GLuint vertex_shader, fragment_shader;
+        if ((vertex_shader = glCreateShader(GL_VERTEX_SHADER)) == 0) {
+            glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH, &log_length);
             GLchar info_log[log_length];
-            glGetShaderInfoLog(glrcbox->vertex_shader, sizeof(info_log),
+            glGetShaderInfoLog(vertex_shader, sizeof(info_log),
+                               NULL, info_log);
+            LOGW("error occurs in glCreateShader(): %s\n", info_log);
+            return -1;
+        }
+        if ((fragment_shader = glCreateShader(GL_FRAGMENT_SHADER)) == 0) {
+            glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH, &log_length);
+            GLchar info_log[log_length];
+            glGetShaderInfoLog(vertex_shader, sizeof(info_log),
+                               NULL, info_log);
+            LOGW("error occurs in glCreateShader(): %s\n", info_log);
+            return -1;
+        }
+        const char *vertex_shader_source, *fragment_shader_source;
+        if (normal) {
+            vertex_shader_source = glrcbox_vertex_shader_source;
+            switch(glrcbox->fragment_shader_type) {
+                case REVERSE_X:
+                    fragment_shader_source = glrcbox_fragment_shader_source_x;
+                    break;
+                case REVERSE_Y:
+                    fragment_shader_source = glrcbox_fragment_shader_source_y;
+                    break;
+                default:
+                    fragment_shader_source = glrcbox_fragment_shader_source;
+                    break;
+            }
+        } else {
+            if (!glrcbox->fragment_shader_source) {
+                LOGW("fragment shader source not set");
+                return -1;
+            }
+            vertex_shader_source = glrcbox_vertex_shader_source;
+            const char *replace_target = "  gl_FragColor = texture2D(sTexture, vTexture);\n";
+            const int temp_buffer_size = 1024;
+            char temp_buffer[temp_buffer_size];
+            switch(glrcbox->fragment_shader_type) {
+                case REVERSE_X: {
+                    glrcbox_replace_string_once_with(temp_buffer, temp_buffer_size,
+                                                     glrcbox_fragment_shader_source_x,
+                                                     replace_target, glrcbox->fragment_shader_source);
+                    fragment_shader_source = temp_buffer;
+                }
+                    break;
+                case REVERSE_Y: {
+                    glrcbox_replace_string_once_with(temp_buffer, temp_buffer_size,
+                                                     glrcbox_fragment_shader_source_y,
+                                                     replace_target, glrcbox->fragment_shader_source);
+                    fragment_shader_source = temp_buffer;
+                }
+                    break;
+                default: {
+                    glrcbox_replace_string_once_with(temp_buffer, temp_buffer_size,
+                                                     glrcbox_fragment_shader_source,
+                                                     replace_target, glrcbox->fragment_shader_source);
+                    fragment_shader_source = temp_buffer;
+                }
+                    break;
+            }
+        }
+        glShaderSource(vertex_shader, 1,
+                       &vertex_shader_source, NULL);
+        glShaderSource(fragment_shader, 1,
+                       &fragment_shader_source, NULL);
+        glCompileShader(vertex_shader);
+        glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &status);
+        if (status != GL_TRUE) {
+            glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH, &log_length);
+            GLchar info_log[log_length];
+            glGetShaderInfoLog(vertex_shader, sizeof(info_log),
                                NULL, info_log);
             LOGW("vertex shader compile failed: %s\n", info_log);
             return -1;
         }
-        glCompileShader(glrcbox->fragment_shader);
-        glGetShaderiv(glrcbox->fragment_shader, GL_COMPILE_STATUS, &status);
+        glCompileShader(fragment_shader);
+        glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &status);
         if (status != GL_TRUE) {
-            glGetShaderiv(glrcbox->fragment_shader, GL_INFO_LOG_LENGTH, &log_length);
+            glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &log_length);
             GLchar info_log[log_length];
-            glGetShaderInfoLog(glrcbox->fragment_shader, sizeof(info_log),
+            glGetShaderInfoLog(fragment_shader, sizeof(info_log),
                                NULL, info_log);
             LOGW("fragment shader compile failed: %s\n", info_log);
             return -1;
         }
-        if ((glrcbox->program = glCreateProgram()) == GL_FALSE) {
-            LOGW("error occurs in glCreateProgram()\n");
+        GLuint program;
+        if ((program = glCreateProgram()) == 0) {
+            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length);
+            GLchar info_log[log_length];
+            glGetProgramInfoLog(program, sizeof(info_log),
+                               NULL, info_log);
+            LOGW("error occurs in glCreateProgram():%s\n", info_log);
             return -1;
         }
-        glAttachShader(glrcbox->program, glrcbox->vertex_shader);
-        glAttachShader(glrcbox->program, glrcbox->fragment_shader);
-        glLinkProgram(glrcbox->program);
-        glGetProgramiv(glrcbox->program, GL_LINK_STATUS, &status);
+        glAttachShader(program, vertex_shader);
+        glAttachShader(program, fragment_shader);
+        glLinkProgram(program);
+        glGetProgramiv(program, GL_LINK_STATUS, &status);
         if (status != GL_TRUE) {
-            glGetProgramiv(glrcbox->program, GL_INFO_LOG_LENGTH, &log_length);
+            glGetProgramiv(program, GL_INFO_LOG_LENGTH, &log_length);
             GLchar info_log[log_length];
-            glGetProgramInfoLog(glrcbox->program, sizeof(info_log),
+            glGetProgramInfoLog(program, sizeof(info_log),
                                 NULL, info_log);
             LOGW("program link failed: %s\n", info_log);
             return -1;
         }
+        glDeleteShader(vertex_shader);
+        glDeleteShader(fragment_shader);
+        if (normal) {
+            glrcbox->normal_program = program;
+        } else {
+            glrcbox->filter_program = program;
+        }
         return 0;
+    }
+    return -1;
+}
+
+int glrcbox_create_shader(GLRenderCameraBox *glrcbox) {
+    if (glrcbox) {
+        int normal = 0, filter = 0;
+        normal = glrcbox_do_create_shader(glrcbox, GL_TRUE);
+        if (glrcbox->fragment_shader_source) {
+            filter = glrcbox_do_create_shader(glrcbox, GL_FALSE);
+        }
+        if (normal == 0 && filter == 0) {
+            return 0;
+        }
     }
     return -1;
 }
 
 int glrcbox_destroy_shader(GLRenderCameraBox *glrcbox) {
     if (glrcbox) {
-        glDeleteShader(glrcbox->vertex_shader);
-        glDeleteShader(glrcbox->fragment_shader);
-        glDeleteProgram(glrcbox->program);
-        glrcbox->vertex_shader = 0;
-        glrcbox->fragment_shader = 0;
-        glrcbox->program = 0;
+        if (glrcbox->normal_program) {
+            glDeleteProgram(glrcbox->normal_program);
+        }
+        if (glrcbox->filter_program) {
+            glDeleteProgram(glrcbox->filter_program);
+        }
+        glrcbox->normal_program = 0;
+        glrcbox->filter_program = 0;
         return 0;
     }
     return -1;
 }
 
-int glrcbox_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id) {
+static int glrcbox_do_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id, GLboolean normal) {
     if (glrcbox) {
         glViewport(0, 0, glrcbox->frame_width, glrcbox->frame_height);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        if (!glrcbox->program) {
+        GLuint program;
+        if (normal) {
+            program = glrcbox->normal_program;
+        } else {
+            program = glrcbox->filter_program;
+        }
+        if (!program) {
             LOGW("is glrcbox_create_shader(GLRenderCameraBox *) not called yet?\n");
             return -1;
         }
+        glUseProgram(program);
 
-        glUseProgram(glrcbox->program);
-
-        GLint position_location = glGetAttribLocation(glrcbox->program,
-                                                      "aPosition");
-        GLint texture_coord_location = glGetAttribLocation(glrcbox->program,
-                                                           "aTextureCoord");
-        GLint texture_location = glGetUniformLocation(glrcbox->program,
-                                                      "sTexture");
+        GLint position_location = glGetAttribLocation(program, "aPosition");
+        GLint texture_coord_location = glGetAttribLocation(program, "aTextureCoord");
+        GLint texture_location = glGetUniformLocation(program, "sTexture");
 
         if (position_location < 0
             || texture_coord_location < 0
@@ -374,19 +485,10 @@ int glrcbox_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id) {
                               glrcbox_vertex_coords);
 
         glEnableVertexAttribArray(texture_coord_index);
-        if (glrcbox->is_front_camera == GL_FALSE) {
-            glVertexAttribPointer(texture_coord_index,
-                                  glrcbox_per_texture_coord_component,
-                                  GL_FLOAT, GL_FALSE,
-                                  glrcbox_per_texture_coord_component * sizeof(GLfloat),
-                                  glrcbox_back_texture_coords);
-        } else {
-            glVertexAttribPointer(texture_coord_index,
-                                  glrcbox_per_texture_coord_component,
-                                  GL_FLOAT, GL_FALSE,
-                                  glrcbox_per_texture_coord_component * sizeof(GLfloat),
-                                  glrcbox_front_texture_coords);
-        }
+        glVertexAttribPointer(texture_coord_index, glrcbox_per_texture_coord_component,
+                              GL_FLOAT, GL_FALSE,
+                              glrcbox_per_texture_coord_component * sizeof(GLfloat),
+                              glrcbox_texture_coords);
 
         glUniform1i(texture_index, 0);
 
@@ -400,12 +502,29 @@ int glrcbox_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id) {
             glReadPixels(0, 0, glrcbox->frame_width, glrcbox->frame_height,
                          GL_RGBA, GL_UNSIGNED_BYTE, glrcbox->pixels);
             /* Open GL (0,0) at lower left corner */
-            glrcbox_upside_down(glrcbox->pixels, glrcbox->frame_width, glrcbox->frame_height,
-                                4 /* RGBA */);
-            glrcbox->frame_data_callback(glrcbox);
+            if (glrcbox_upside_down(glrcbox->pixels, glrcbox->frame_width, glrcbox->frame_height,
+                                    4 /* RGBA */) == -1) {
+                LOGW("call glrcbox_upside_down failed!");
+            }
+            glrcbox->frame_data_callback(glrcbox, normal);
         }
-
         return 0;
+    }
+    return -1;
+}
+
+int glrcbox_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id) {
+    if (glrcbox) {
+        int normal = 0, filter = 0;
+        if (glrcbox->normal_program > 0) {
+            normal = glrcbox_do_draw_frame(glrcbox, texture_id, GL_TRUE);
+        }
+        if (glrcbox->filter_program > 0) {
+            filter = glrcbox_do_draw_frame(glrcbox, texture_id, GL_FALSE);
+        }
+        if (normal == 0 && filter == 0) {
+            return 0;
+        }
     }
     return -1;
 }

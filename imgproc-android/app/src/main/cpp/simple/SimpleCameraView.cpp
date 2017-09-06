@@ -152,12 +152,11 @@ void SimpleCameraView::UpsideDownBuffer(GLubyte *pixels, GLuint width, GLuint he
         const size_t row_size = static_cast<size_t>(width * channels);
         GLubyte *temp_row_pixels = static_cast<GLubyte *>(malloc(row_size));
         if (temp_row_pixels) {
-            GLint i = 0, j = height - 1, temp_unit = -1;
+            GLint i = 0, j = height - 1;
             void *temp_ptr_i = NULL, *temp_ptr_j = NULL;
             while(i < j) {
-                temp_unit = width * channels;
-                temp_ptr_i = &pixels[i * temp_unit];
-                temp_ptr_j = &pixels[j * temp_unit];
+                temp_ptr_i = &pixels[i * row_size];
+                temp_ptr_j = &pixels[j * row_size];
                 memcpy(temp_row_pixels, temp_ptr_j, row_size);
                 memcpy(temp_ptr_j, temp_ptr_i, row_size);
                 memcpy(temp_ptr_i, temp_row_pixels, row_size);

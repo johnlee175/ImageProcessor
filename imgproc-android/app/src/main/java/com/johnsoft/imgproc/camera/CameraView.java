@@ -21,6 +21,7 @@ import java.nio.ByteOrder;
 
 import android.content.Context;
 import android.graphics.SurfaceTexture;
+import android.support.annotation.IntDef;
 import android.support.annotation.Keep;
 import android.util.AttributeSet;
 import android.view.TextureView;
@@ -36,21 +37,39 @@ import android.view.TextureView;
  * <supports-gl-texture android:name="GL_OES_compressed_ETC1_RGB8_texture" />
  * }
  *
+ * TODO single CameraView can't switch camera dynamic when runtime.
+ * TODO We can make multiple CameraView, we also can destroy old and create new one.
+ *
  * @author John Kenrinus Lee
  * @version 2017-08-14
  */
 @Keep
 public abstract class CameraView extends TextureView
         implements TextureView.SurfaceTextureListener, CameraManager.GLTextureViewClient {
-    private boolean isPaused;
-    private boolean isFrontCamera;
+    @Native
+    public static final int FRAGMENT_SHADER_TYPE_NORMAL = 0;
+    @Native
+    public static final int FRAGMENT_SHADER_TYPE_REVERSE_X = -1;
+    @Native
+    public static final int FRAGMENT_SHADER_TYPE_REVERSE_Y = 1;
+
+    @IntDef({FRAGMENT_SHADER_TYPE_NORMAL, FRAGMENT_SHADER_TYPE_REVERSE_X, FRAGMENT_SHADER_TYPE_REVERSE_Y})
+    public @interface FragmentShaderType {
+    }
+
+    private boolean mIsPaused;
     private int mCameraIndex;
+    @FragmentShaderType
+    private int mFragmentShaderType;
 
     private int mFrameWidth;
     private int mFrameHeight;
     private SurfaceTexture mSurface;
 
-    protected OnFrameRgbaDataCallback mFrameRgbaDataCallback;
+    private String mVertexShaderSourceCode;
+    private String mFragmentShaderSourceCode;
+
+    private OnFrameRgbaDataCallback mFrameRgbaDataCallback;
 
     public CameraView(Context context) {
         super(context);
@@ -64,39 +83,39 @@ public abstract class CameraView extends TextureView
 
     @Override
     public boolean isPaused() {
-        return isPaused;
+        return mIsPaused;
     }
 
     @Override
     public void setPaused(boolean isPaused) {
-        this.isPaused = isPaused;
+        mIsPaused = isPaused;
     }
 
     public CameraView markCameraIndex(int cameraIndex) {
         if (mSurface == null) {
-            this.mCameraIndex = cameraIndex;
+            mCameraIndex = cameraIndex;
         } else {
             System.out.println("#markCameraIndex should be call before surface attach");
         }
         return this;
     }
 
-    public CameraView markAsFrontCamera(boolean isFrontCamera) {
+    public CameraView markFragmentShaderType(@FragmentShaderType int fragmentShaderType) {
         if (mSurface == null) {
-            this.isFrontCamera = isFrontCamera;
+            mFragmentShaderType = fragmentShaderType;
         } else {
-            System.out.println("#markAsFrontCamera should be call before surface attach");
+            System.out.println("#markFragmentShaderType should be call before surface attach");
         }
         return this;
     }
 
     public CameraView setOnFrameRgbaDataCallback(OnFrameRgbaDataCallback callback) {
         if (callback == null) {
-            this.mFrameRgbaDataCallback = null;
+            mFrameRgbaDataCallback = null;
             return this;
         } else {
             if (mSurface == null) {
-                this.mFrameRgbaDataCallback = callback;
+                mFrameRgbaDataCallback = callback;
             } else {
                 System.out.println("#setOnFrameRgbaDataCallback should be call before surface attach");
             }
@@ -104,7 +123,27 @@ public abstract class CameraView extends TextureView
         }
     }
 
-    public abstract CameraView setShaderSourceCode(String vertexSource, String fragmentSource);
+    /**
+     * this method should be called before view shown.
+     * @param vertexSource ignored
+     * @param fragmentSource Need fragment shader source code snippet will be placed in main():
+     *                       You can use variable: samplerExternalOES sTexture, vec2 vTexture;
+     *                       You must be assignment variable in last line: gl_FragColor;
+     *                       You also can call built-in function like texture2D, or define custom variable;
+     */
+    public CameraView setShaderSourceCode(String vertexSource, String fragmentSource) {
+        if (mSurface == null) {
+            if (vertexSource != null) {
+                this.mVertexShaderSourceCode = vertexSource;
+            }
+            if (fragmentSource != null) {
+                this.mFragmentShaderSourceCode = fragmentSource;
+            }
+        } else {
+            System.out.println("#setShaderSourceCode should be call before surface attach");
+        }
+        return this;
+    }
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, final int width, final int height) {
@@ -145,25 +184,45 @@ public abstract class CameraView extends TextureView
         return mSurface;
     } */
 
-    protected boolean isFrontCamera() {
-        return isFrontCamera;
-    }
-
     protected int getCameraIndex() {
         return mCameraIndex;
     }
 
+    @Native
+    protected int getFragmentShaderType() {
+        return mFragmentShaderType;
+    }
+
+    @Native
     protected int getFrameWidth() {
         return mFrameWidth;
     }
 
-    public int getFrameHeight() {
+    @Native
+    protected int getFrameHeight() {
         return mFrameHeight;
     }
 
+    @Native
+    protected OnFrameRgbaDataCallback getOnFrameRgbaDataCallback() {
+        return mFrameRgbaDataCallback;
+    }
+
+    @Native
+    public String getVertexShaderSourceCode() {
+        return mVertexShaderSourceCode;
+    }
+
+    @Native
+    public String getFragmentShaderSourceCode() {
+        return mFragmentShaderSourceCode;
+    }
+
+    @Native
     public interface OnFrameRgbaDataCallback {
         /** this method should be processed quickly to make sure extract frame smoothly */
-        void onFrameRgbaData(ByteBuffer rgba);
+        @Native
+        void onFrameRgbaData(ByteBuffer rgba, boolean normal);
     }
 
     public static class FrameCallbackThread extends Thread
@@ -171,6 +230,7 @@ public abstract class CameraView extends TextureView
         private final OnFrameRgbaDataCallback callback;
         private final DirectByteBuffers.DirectMemory directMemory;
         private final ByteBuffer buffer;
+        private volatile boolean isNormal;
         private volatile boolean loop;
         private volatile boolean paused;
         private volatile boolean busy;
@@ -230,7 +290,7 @@ public abstract class CameraView extends TextureView
                     }
                     buffer.flip();
                     try {
-                        callback.onFrameRgbaData(buffer);
+                        callback.onFrameRgbaData(buffer, isNormal);
                     } catch (Throwable thr) {
                         thr.printStackTrace();
                     }
@@ -256,10 +316,11 @@ public abstract class CameraView extends TextureView
         }
 
         @Override
-        public void onFrameRgbaData(ByteBuffer rgba) {
+        public void onFrameRgbaData(ByteBuffer rgba, boolean normal) {
             if (!busy) {
                 buffer.put(rgba);
                 rgba.rewind();
+                isNormal = normal;
                 busy = true;
                 sendNotification(null);
             }

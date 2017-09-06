@@ -164,20 +164,22 @@ public class PipActivity extends AppCompatActivity implements CameraView.OnFrame
             CameraView cameraView;
 
             cameraView = new CameraJavaView(PipActivity.this);
-            cameraView.markCameraIndex(backCameraIndex).markAsFrontCamera(false);
+            cameraView.markCameraIndex(backCameraIndex);
+            FragmentShaderTypePolicy.getDefault().apply(cameraView, false);
             cameraView.setLayoutParams(lpBack);
             layout.addView(cameraView, 0, lpBack);
 
             cameraView = new CameraJavaView(PipActivity.this);
-            cameraView.markCameraIndex(frontCameraIndex).markAsFrontCamera(true)
-                    .setOnFrameRgbaDataCallback(callbackThread);
+            cameraView.markCameraIndex(frontCameraIndex)
+                      .setOnFrameRgbaDataCallback(callbackThread);
+            FragmentShaderTypePolicy.getDefault().apply(cameraView, true);
             cameraView.setLayoutParams(lpFront);
             layout.addView(cameraView, 1, lpFront);
         }
     }
 
     @Override
-    public void onFrameRgbaData(ByteBuffer rgba) {
+    public void onFrameRgbaData(ByteBuffer rgba, boolean normal) {
         if (capture) {
             capture = false;
             try {

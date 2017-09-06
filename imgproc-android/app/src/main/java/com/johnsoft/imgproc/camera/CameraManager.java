@@ -50,6 +50,7 @@ import android.view.Surface;
 public enum CameraManager {
     singleInstance;
 
+    @Native
     public static class CameraManageException extends RuntimeException {
         public CameraManageException(String message) {
             super(message);

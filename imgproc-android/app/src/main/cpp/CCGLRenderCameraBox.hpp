@@ -32,7 +32,7 @@ class CCGLRenderCameraBox;
 class CCFrameDataCallback {
 public:
     virtual ~CCFrameDataCallback() { }
-    virtual void OnDataCallback(CCGLRenderCameraBox *glrcbox) = 0;
+    virtual void OnDataCallback(CCGLRenderCameraBox *glrcbox, GLboolean normal) = 0;
 };
 
 class CCGLRenderCameraBox {
@@ -44,7 +44,7 @@ public:
     void *GetUserTag();
     int SetFrameSize(GLuint frameWidth,
                      GLuint frameHeight);
-    int SetFrontCamera(GLboolean isFrontCamera);
+    int SetFragmentShaderType(FragmentShaderType fragmentShaderType);
     int SetShaderSource(const GLchar *vertexSource,
                         const GLchar *fragmentSource);
     int GetPixels(GLubyte **pixels, size_t *pixelsSize);

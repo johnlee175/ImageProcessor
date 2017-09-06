@@ -41,65 +41,40 @@ import android.widget.ScrollView;
  */
 public class CameraActivity extends AppCompatActivity {
     public static final String fragShaderCode1 = ""
-            + "#extension GL_OES_EGL_image_external : require\n"
-            + "precision mediump float;\n"
-            + "varying vec2 vTextureCoord;\n"
-            + "uniform samplerExternalOES sTexture;\n"
-            + "void main() {\n"
-            + "  vec2 uv = vTextureCoord;\n"
-            + "  if (vTextureCoord.y>0.5){\n"
-            + "    uv.y = 1.0 - vTextureCoord.y;\n"
+            + "  if (vTexture.y > 0.5){\n"
+            + "    vTexture.y = 1.0 - vTexture.y;\n"
             + "  }\n"
-            + "  gl_FragColor = texture2D(sTexture, uv);\n"
-            + "}";
+            + "  gl_FragColor = texture2D(sTexture, vTexture);\n";
     public static final String fragShaderCode2 = ""
-            + "#extension GL_OES_EGL_image_external : require\n"
-            + "precision mediump float;\n"
-            + "varying vec2 vTextureCoord;\n"
-            + "uniform samplerExternalOES sTexture;\n"
-            + "void main() {\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
-            + "  gl_FragColor = vec4(1.0-color.r, 1.0-color.g, 1.0-color.b, 1.0);\n"
-            + "}";
+            + "  vec4 color = texture2D(sTexture, vTexture);\n"
+            + "  gl_FragColor = vec4(1.0-color.r, 1.0-color.g, 1.0-color.b, 1.0);\n";
     public static final String fragShaderCode3 = ""
-            + "#extension GL_OES_EGL_image_external : require\n"
-            + "precision mediump float;\n"
-            + "varying vec2 vTextureCoord;\n"
-            + "uniform samplerExternalOES sTexture;\n"
-            + "const vec3 monoMultiplier = vec3(0.299, 0.587, 0.114);\n"
-            + "const vec3 sepiaToneFactor = vec3(1.2, 1.0, 0.8);\n"
-            + "void main() {\n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord);\n"
-            + "  float monoColor = dot(color.rgb,monoMultiplier);\n"
-            + "  gl_FragColor = vec4(clamp(vec3(monoColor, monoColor, monoColor)*sepiaToneFactor, 0.0, 1.0), 1.0);\n"
-            + "}";
+            + "  vec3 monoMultiplier = vec3(0.299, 0.587, 0.114);\n"
+            + "  vec3 sepiaToneFactor = vec3(1.2, 1.0, 0.8);\n"
+            + "  vec4 color = texture2D(sTexture, vTexture);\n"
+            + "  float monoColor = dot(color.rgb, monoMultiplier);\n"
+            + "  gl_FragColor = vec4(clamp(vec3(monoColor, monoColor, monoColor) * sepiaToneFactor, 0.0, 1.0), 1.0);\n";
     public static final String fragShaderCode4 = ""
-            + "#extension GL_OES_EGL_image_external : require\n"
-            + "precision mediump float;\n"
-            + "varying vec2 vTextureCoord;\n"
-            + "uniform samplerExternalOES sTexture;\n"
-            + "const float sampleDist = 1.0;\n"
-            + "const float sampleStrength = 2.2; \n"
-            + "void main() {\n"
+            + "  float sampleDist = 1.0;\n"
+            + "  float sampleStrength = 2.2;\n"
             + "  float samples[10];\n"
             + "  samples[0] = -0.08; samples[1] = -0.05;\n"
             + "  samples[2] = -0.03; samples[3] = -0.02;\n"
             + "  samples[4] = -0.01; samples[5] = 0.01;\n"
             + "  samples[6] = 0.02;  samples[7] = 0.03;\n"
             + "  samples[8] = 0.05;  samples[9] = 0.08;\n"
-            + "  vec2 dir = 0.5 - vTextureCoord; \n"
-            + "  float dist = sqrt(dir.x*dir.x + dir.y*dir.y); \n"
-            + "  dir = dir / dist; \n"
-            + "  vec4 color = texture2D(sTexture, vTextureCoord); \n"
+            + "  vec2 dir = 0.5 - vTexture;\n"
+            + "  float dist = sqrt(dir.x * dir.x + dir.y * dir.y);\n"
+            + "  dir = dir / dist;\n"
+            + "  vec4 color = texture2D(sTexture, vTexture);\n"
             + "  vec4 sum = color;\n"
             + "  for (int i = 0; i < 10; ++i) {\n"
-            + "    sum += texture2D(sTexture, vTextureCoord + dir*samples[i]*sampleDist);\n"
+            + "    sum += texture2D(sTexture, vTexture + dir * samples[i] * sampleDist);\n"
             + "  }\n"
             + "  sum *= 1.0 / 11.0;\n"
             + "  float t = dist * sampleStrength;\n"
             + "  t = clamp(t, 0.0, 1.0);\n"
-            + "  gl_FragColor = mix(color, sum, t);\n"
-            + "} ";
+            + "  gl_FragColor = mix(color, sum, t);\n";
 
     private static final Random rand = new Random();
     protected static long delayMillis = 500L;
@@ -250,24 +225,28 @@ public class CameraActivity extends AppCompatActivity {
             CameraView cameraView;
 
             cameraView = new CameraJavaView(CameraActivity.this);
-            cameraView.markCameraIndex(backCameraIndex).markAsFrontCamera(false);
+            cameraView.markCameraIndex(backCameraIndex);
+            FragmentShaderTypePolicy.getDefault().apply(cameraView, false);
             cameraView.setLayoutParams(lpBack);
             backLayout.addView(cameraView, 0, lpBack);
 
             cameraView = new CameraJavaView(CameraActivity.this);
             cameraView.setShaderSourceCode(null, rand.nextBoolean() ? fragShaderCode3 : fragShaderCode4);
-            cameraView.markCameraIndex(backCameraIndex).markAsFrontCamera(false);
+            cameraView.markCameraIndex(backCameraIndex);
+            FragmentShaderTypePolicy.getDefault().apply(cameraView, false);
             cameraView.setLayoutParams(lpBack);
             backLayout.addView(cameraView, 1, lpBack);
 
             cameraView = new CameraJavaView(CameraActivity.this);
-            cameraView.markCameraIndex(frontCameraIndex).markAsFrontCamera(true);
+            cameraView.markCameraIndex(frontCameraIndex);
+            FragmentShaderTypePolicy.getDefault().apply(cameraView, true);
             cameraView.setLayoutParams(lpFront);
             frontLayout.addView(cameraView, 0, lpFront);
 
             cameraView = new CameraJavaView(CameraActivity.this);
             cameraView.setShaderSourceCode(null, rand.nextBoolean() ? fragShaderCode1 : fragShaderCode2);
-            cameraView.markCameraIndex(frontCameraIndex).markAsFrontCamera(true);
+            cameraView.markCameraIndex(frontCameraIndex);
+            FragmentShaderTypePolicy.getDefault().apply(cameraView, true);
             cameraView.setLayoutParams(lpFront);
             frontLayout.addView(cameraView, 1, lpFront);
         }

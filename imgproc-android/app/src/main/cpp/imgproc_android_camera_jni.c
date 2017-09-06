@@ -28,20 +28,21 @@ struct JNIGLRenderCameraBox {
     JavaVM *vm;
     jmethodID method;
     jobject callback;
-    jobject bytebuffer;
-    jstring jvertexShaderSource;
-    jstring jfragmentShaderSource;
-    const char *vertexShaderSource;
-    const char *fragmentShaderSource;
+    jobject byte_buffer;
+    jstring j_vertex_shader_source;
+    jstring j_fragment_shader_source;
+    const char *vertex_shader_source;
+    const char *fragment_shader_source;
 };
 
-static void callback_func(GLRenderCameraBox *glrcbox) {
+static void callback_func(GLRenderCameraBox *glrcbox, GLboolean normal) {
     struct JNIGLRenderCameraBox *jni_glrcbox = _static_cast(struct JNIGLRenderCameraBox *)
             glrcbox_get_user_tag(glrcbox);
     if (jni_glrcbox && jni_glrcbox->vm && jni_glrcbox->method) {
         JNIEnv *env;
         (*jni_glrcbox->vm)->AttachCurrentThread(jni_glrcbox->vm, &env, NULL);
-        (*env)->CallVoidMethod(env, jni_glrcbox->callback, jni_glrcbox->method, jni_glrcbox->bytebuffer);
+        (*env)->CallVoidMethod(env, jni_glrcbox->callback, jni_glrcbox->method,
+                               jni_glrcbox->byte_buffer, normal ? JNI_TRUE : JNI_FALSE);
     }
 }
 
@@ -121,12 +122,24 @@ JNI_METHOD(void, CameraNativeView, createShaderAndBuffer)(JNI_INSTANCE_PARAM) {
 
     struct JNIGLRenderCameraBox *jni_glrcbox = _static_cast(struct JNIGLRenderCameraBox *)
             glrcbox_get_user_tag(glrcbox);
-    if (jni_glrcbox) {
-        jni_glrcbox->vm = vm;
+    if (!jni_glrcbox) {
+        jnihelper_throw_exception(env, CAMERA_MANAGE_EXCEPTION, "jni_glrcbox is NULL which getting from user tag");
+        return;
     }
+    jni_glrcbox->vm = vm;
 
-    jboolean is_front_camera = jnihelper_call_method("isFrontCamera", "()Z", Boolean);
-    glrcbox_set_front_camera(glrcbox, _static_cast(GLboolean) is_front_camera);
+    jint fragment_shader_type = jnihelper_call_method("getFragmentShaderType", "()I", Int);
+    switch(fragment_shader_type) {
+        case -1:
+            glrcbox_set_fragment_shader_type(glrcbox, REVERSE_X);
+            break;
+        case 1:
+            glrcbox_set_fragment_shader_type(glrcbox, REVERSE_Y);
+            break;
+        default:
+            glrcbox_set_fragment_shader_type(glrcbox, NORMAL);
+            break;
+    }
 
     jint frame_width = jnihelper_call_method("getFrameWidth", "()I", Int);
     jint frame_height = jnihelper_call_method("getFrameHeight", "()I", Int);
@@ -136,13 +149,26 @@ JNI_METHOD(void, CameraNativeView, createShaderAndBuffer)(JNI_INSTANCE_PARAM) {
     size_t pixels_size;
     glrcbox_get_pixels(glrcbox, &pixels, &pixels_size);
 
-    jobject callback = jnihelper_get_field("mFrameRgbaDataCallback", "Lcom/johnsoft/imgproc/camera/"
+    jstring vertexSource = jnihelper_call_method("getVertexShaderSourceCode", "()Ljava/lang/String;", Object);
+    jstring fragmentSource = jnihelper_call_method("getFragmentShaderSourceCode", "()Ljava/lang/String;", Object);
+    if (vertexSource) {
+        jni_glrcbox->j_vertex_shader_source = _static_cast(jstring) (*env)->NewGlobalRef(env, vertexSource);
+        jni_glrcbox->vertex_shader_source = jnihelper_from_utf_string(env, vertexSource);
+    }
+    if (fragmentSource) {
+        jni_glrcbox->j_fragment_shader_source = _static_cast(jstring) (*env)->NewGlobalRef(env, fragmentSource);
+        jni_glrcbox->fragment_shader_source = jnihelper_from_utf_string(env, fragmentSource);
+    }
+    glrcbox_set_shader_source(glrcbox, jni_glrcbox->vertex_shader_source,
+                                  jni_glrcbox->fragment_shader_source);
+
+    jobject callback = jnihelper_call_method("getOnFrameRgbaDataCallback", "()Lcom/johnsoft/imgproc/camera/"
             "CameraView$OnFrameRgbaDataCallback;", Object);
-    if (callback && jni_glrcbox) {
+    if (callback) {
         jobject byte_buffer = (*env)->NewDirectByteBuffer(env, pixels, _static_cast(jlong) pixels_size);
-        jni_glrcbox->method = jnihelper_obj_method_id(callback, "onFrameRgbaData", "(Ljava/nio/ByteBuffer;)V");
+        jni_glrcbox->method = jnihelper_obj_method_id(callback, "onFrameRgbaData", "(Ljava/nio/ByteBuffer;Z)V");
         jni_glrcbox->callback = (*env)->NewGlobalRef(env, callback);
-        jni_glrcbox->bytebuffer = (*env)->NewGlobalRef(env, byte_buffer);
+        jni_glrcbox->byte_buffer = (*env)->NewGlobalRef(env, byte_buffer);
     }
 
     if (glrcbox_create_shader(glrcbox) < 0) {
@@ -161,18 +187,18 @@ JNI_METHOD(void, CameraNativeView, destroyShaderAndBuffer)(JNI_INSTANCE_PARAM) {
         if (jni_glrcbox->callback) {
             (*env)->DeleteGlobalRef(env, jni_glrcbox->callback);
         }
-        if (jni_glrcbox->bytebuffer) {
-            (*env)->DeleteGlobalRef(env, jni_glrcbox->bytebuffer);
+        if (jni_glrcbox->byte_buffer) {
+            (*env)->DeleteGlobalRef(env, jni_glrcbox->byte_buffer);
         }
-        if (jni_glrcbox->jvertexShaderSource && jni_glrcbox->vertexShaderSource) {
-            (*env)->ReleaseStringUTFChars(env, jni_glrcbox->jvertexShaderSource,
-                                          jni_glrcbox->vertexShaderSource);
-            (*env)->DeleteGlobalRef(env, jni_glrcbox->jvertexShaderSource);
+        if (jni_glrcbox->j_vertex_shader_source && jni_glrcbox->vertex_shader_source) {
+            (*env)->ReleaseStringUTFChars(env, jni_glrcbox->j_vertex_shader_source,
+                                          jni_glrcbox->vertex_shader_source);
+            (*env)->DeleteGlobalRef(env, jni_glrcbox->j_vertex_shader_source);
         }
-        if (jni_glrcbox->jfragmentShaderSource && jni_glrcbox->fragmentShaderSource) {
-            (*env)->ReleaseStringUTFChars(env, jni_glrcbox->jfragmentShaderSource,
-                                          jni_glrcbox->fragmentShaderSource);
-            (*env)->DeleteGlobalRef(env, jni_glrcbox->jfragmentShaderSource);
+        if (jni_glrcbox->j_fragment_shader_source && jni_glrcbox->fragment_shader_source) {
+            (*env)->ReleaseStringUTFChars(env, jni_glrcbox->j_fragment_shader_source,
+                                          jni_glrcbox->fragment_shader_source);
+            (*env)->DeleteGlobalRef(env, jni_glrcbox->j_fragment_shader_source);
         }
         free(jni_glrcbox);
     }
@@ -188,32 +214,6 @@ JNI_METHOD(void, CameraNativeView, drawFrame)(JNI_INSTANCE_PARAM, jint textureId
         jnihelper_throw_exception(env, CAMERA_MANAGE_EXCEPTION, "drawFrame native method execute error");
         return;
     }
-}
-
-JNI_METHOD(jobject/* CameraView */, CameraNativeView, setShaderSourceCode)(JNI_INSTANCE_PARAM,
-                                                                           jstring vertexSource,
-                                                                           jstring fragmentSource) {
-    GLRenderCameraBox *glrcbox = _reinterpret_cast(GLRenderCameraBox *)
-            jnihelper_get_native_ctx_ptr(env, thiz);
-    struct JNIGLRenderCameraBox *jni_glrcbox = _static_cast(struct JNIGLRenderCameraBox *)
-            glrcbox_get_user_tag(glrcbox);
-    if (jni_glrcbox) {
-        if (vertexSource) {
-            jni_glrcbox->jvertexShaderSource = _static_cast(jstring) (*env)->NewGlobalRef(env, vertexSource);
-            jni_glrcbox->vertexShaderSource = jnihelper_from_utf_string(env, vertexSource);
-        }
-        if (fragmentSource) {
-            jni_glrcbox->jfragmentShaderSource = _static_cast(jstring) (*env)->NewGlobalRef(env, fragmentSource);
-            jni_glrcbox->fragmentShaderSource = jnihelper_from_utf_string(env, fragmentSource);
-        }
-        if (glrcbox_set_shader_source(glrcbox, jni_glrcbox->vertexShaderSource,
-                                      jni_glrcbox->fragmentShaderSource) == -1) {
-            jnihelper_throw_exception(env, CAMERA_MANAGE_EXCEPTION,
-                                      "setShaderSourceCode native method execute error");
-            return NULL;
-        }
-    }
-    return thiz;
 }
 
 /* ====================== DirectByteBuffers.NativeDirectMemory ====================== */

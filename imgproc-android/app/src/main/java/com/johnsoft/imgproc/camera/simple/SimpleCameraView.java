@@ -17,12 +17,12 @@
 package com.johnsoft.imgproc.camera.simple;
 
 import com.johnsoft.imgproc.camera.CameraManager;
+import com.johnsoft.imgproc.camera.CameraView;
 
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.SurfaceTexture;
 import android.hardware.SensorManager;
-import android.support.annotation.IntDef;
 import android.support.annotation.Keep;
 import android.util.AttributeSet;
 import android.view.OrientationEventListener;
@@ -47,12 +47,9 @@ public class SimpleCameraView extends TextureView implements TextureView.Surface
         void onDestroy();
     }
 
-    public static final int FRAG_SHADER_TYPE_NORMAL = 0;
-    public static final int FRAG_SHADER_TYPE_REVERSE_X = -1;
-    public static final int FRAG_SHADER_TYPE_REVERSE_Y = 1;
-
-    @IntDef({FRAG_SHADER_TYPE_NORMAL, FRAG_SHADER_TYPE_REVERSE_X, FRAG_SHADER_TYPE_REVERSE_Y})
-    public @interface FragShaderTypeAnno {
+    @Keep
+    public interface OnTopTrackListener {
+        void onTopChanged(boolean correct);
     }
 
     private boolean isInit;
@@ -61,9 +58,12 @@ public class SimpleCameraView extends TextureView implements TextureView.Surface
     private Surface nativeSurface;
     private RenderThread renderThread;
     private OrientationEventListener orientationEventListener;
-    @FragShaderTypeAnno
-    private int fragShaderType = FRAG_SHADER_TYPE_NORMAL;
+    @CameraView.FragmentShaderType
+    private int fragShaderType = CameraView.FRAGMENT_SHADER_TYPE_NORMAL;
     private int orientationType = Configuration.ORIENTATION_UNDEFINED;
+    private OnTopTrackListener onTopTrackListener;
+    private int orientationForTopTrack = Configuration.ORIENTATION_UNDEFINED;
+    private Boolean correct;
 
     public SimpleCameraView(Context context) {
         super(context);
@@ -75,13 +75,23 @@ public class SimpleCameraView extends TextureView implements TextureView.Surface
         setSurfaceTextureListener(this);
     }
 
+    public void setOnTopTrackListener(int orientation, OnTopTrackListener listener) {
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            orientationForTopTrack = orientation;
+            onTopTrackListener = listener;
+        } else if (orientation == Configuration.ORIENTATION_PORTRAIT) {
+            orientationForTopTrack = orientation;
+            onTopTrackListener = listener;
+        } else {
+            System.out.println("setOnTopTrackListener: Not support the orientation " + orientation);
+        }
+    }
+
     public void setFrameDataCallback(FrameDataCallback callback) {
         this.nativeCallback = callback;
     }
 
-    /**
-     * {@link #FRAG_SHADER_TYPE_NORMAL}, {@link #FRAG_SHADER_TYPE_REVERSE_X}, {@link #FRAG_SHADER_TYPE_REVERSE_Y} */
-    public void setFragShaderType(@FragShaderTypeAnno int fragShaderType) {
+    public void setFragShaderType(@CameraView.FragmentShaderType int fragShaderType) {
         this.fragShaderType = fragShaderType;
     }
 
@@ -102,23 +112,48 @@ public class SimpleCameraView extends TextureView implements TextureView.Surface
                             || (orientation > (180 - gap) && orientation < (180 + gap))) {
                         if (orientationType != Configuration.ORIENTATION_PORTRAIT) {
                             orientationType = Configuration.ORIENTATION_PORTRAIT;
-                            System.out.println("SOMMNSON portrait");
+                            System.out.println("onOrientationChanged portrait");
                         }
                     } else if ((orientation > (90 - gap) && orientation < (90 + gap))
                             || (orientation > (270 - gap) && orientation < (270 + gap))) {
                         if (orientationType != Configuration.ORIENTATION_LANDSCAPE) {
                             orientationType = Configuration.ORIENTATION_LANDSCAPE;
-                            System.out.println("SOMMNSON landscape");
+                            System.out.println("onOrientationChanged landscape");
+                        }
+                    }
+                    final int base;
+                    if (orientationForTopTrack == Configuration.ORIENTATION_LANDSCAPE) {
+                        base = 270;
+                    } else if (orientationForTopTrack == Configuration.ORIENTATION_PORTRAIT) {
+                        base = 0;
+                    } else {
+                        base = -1;
+                    }
+                    if (base != -1) {
+                        if (correct == null) {
+                            correct = orientation > (base - gap) && orientation < (base + gap);
+                            return;
+                        }
+                        if (correct && (orientation < (base - gap) || orientation > (base + gap))) {
+                            correct = false;
+                            if (onTopTrackListener != null) {
+                                onTopTrackListener.onTopChanged(false);
+                            }
+                        } else if (!correct && (orientation > (base - gap) && orientation < (base + gap))) {
+                            correct = true;
+                            if (onTopTrackListener != null) {
+                                onTopTrackListener.onTopChanged(true);
+                            }
                         }
                     }
                 }
             };
         }
         if (orientationEventListener.canDetectOrientation()) {
-            System.out.println("SOMMNSON Can detect orientation");
+            System.out.println("OrientationEventListener: Can detect orientation");
             orientationEventListener.enable();
         } else {
-            System.out.println("SOMMNSON Cannot detect orientation");
+            System.out.println("OrientationEventListener: Cannot detect orientation");
             orientationEventListener.disable();
         }
     }

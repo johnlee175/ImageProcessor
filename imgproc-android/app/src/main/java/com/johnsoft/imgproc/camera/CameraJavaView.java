@@ -52,20 +52,11 @@ public class CameraJavaView extends CameraView {
 
     // texture coordinate in android OpenGL es:
     // is not from bottom left to top right, just from top left to bottom right!
-    private static final float[] backTextureCoords = { // rotate 0 degree
+    private static final float[] textureCoords = {
             0.0f, 0.0f, // top left
             0.0f, 1.0f, // bottom left
             1.0f, 1.0f, // bottom right
             1.0f, 0.0f, // top right
-    };
-
-    // texture coordinate in android OpenGL es:
-    // is not from bottom left to top right, just from top left to bottom right!
-    private static final float[] frontTextureCoords = { // rotate 180 degree
-            1.0f, 1.0f, // bottom right
-            1.0f, 0.0f, // top right
-            0.0f, 0.0f, // top left
-            0.0f, 1.0f, // bottom left
     };
 
     private static final short[] drawOrder = { 0, 1, 2, 0, 2, 3 };
@@ -81,20 +72,64 @@ public class CameraJavaView extends CameraView {
             + "  gl_Position = aPosition;\n"
             + "  vTextureCoord = aTextureCoord;\n"
             + "}";
+    /* if change shader source code, search replace_target in this file */
     private static final String defaultFragmentShaderSource = ""
             + "#extension GL_OES_EGL_image_external : require\n"
             + "precision mediump float;\n"
             + "varying vec2 vTextureCoord;\n"
             + "uniform samplerExternalOES sTexture;\n"
             + "void main() {\n"
-            + "  gl_FragColor = texture2D(sTexture, vTextureCoord);\n"
+            + "  vec2 vTexture = vTextureCoord;\n"
+            + "  gl_FragColor = texture2D(sTexture, vTexture);\n"
+            + "}";
+    private static final String defaultFragmentShaderSourceX = ""
+            + "#extension GL_OES_EGL_image_external : require\n"
+            + "precision mediump float;\n"
+            + "varying vec2 vTextureCoord;\n"
+            + "uniform samplerExternalOES sTexture;\n"
+            + "void main() {\n"
+            + "  vec2 vTexture = vTextureCoord;\n"
+            + "  vTexture.x = 1.0 - vTexture.x;\n"
+            + "  gl_FragColor = texture2D(sTexture, vTexture);\n"
+            + "}";
+    private static final String defaultFragmentShaderSourceY = ""
+            + "#extension GL_OES_EGL_image_external : require\n"
+            + "precision mediump float;\n"
+            + "varying vec2 vTextureCoord;\n"
+            + "uniform samplerExternalOES sTexture;\n"
+            + "void main() {\n"
+            + "  vec2 vTexture = vTextureCoord;\n"
+            + "  vTexture.y = 1.0 - vTexture.y;\n"
+            + "  gl_FragColor = texture2D(sTexture, vTexture);\n"
             + "}";
 
-    private int mProgram;
-    private int mVertexShader;
-    private int mFragmentShader;
-    private String mVertexShaderSourceCode = defaultVertexShaderSource;
-    private String mFragmentShaderSourceCode = defaultFragmentShaderSource;
+    public static void upsideDown(ByteBuffer pixelByteBuffer, int width, int height, int channels) {
+        if (pixelByteBuffer != null) {
+            final ByteBuffer pixels = pixelByteBuffer.duplicate();
+            final ByteBuffer temp = pixels.duplicate();
+            final int row_size = width * channels;
+            final byte[] temp_row_pixels = new byte[row_size];
+            int i = 0, j = height - 1;
+            while(i < j) {
+                pixels.position(j * row_size);
+                pixels.get(temp_row_pixels, 0, row_size);
+
+                temp.position(i * row_size);
+                temp.limit(temp.position() + row_size);
+                pixels.position(j * row_size);
+                pixels.put(temp);
+
+                pixels.position(i * row_size);
+                pixels.put(temp_row_pixels, 0, row_size);
+
+                ++i;
+                --j;
+            }
+        }
+    }
+
+    private int mNormalProgram;
+    private int mFilterProgram;
     private FloatBuffer mVertexBuffer;
     private FloatBuffer mTextureBuffer;
     private ShortBuffer mDrawListBuffer;
@@ -108,16 +143,6 @@ public class CameraJavaView extends CameraView {
         super(context, attrs);
     }
 
-    public CameraJavaView setShaderSourceCode(String vertexSource, String fragmentSource) {
-        if (vertexSource != null) {
-            this.mVertexShaderSourceCode = vertexSource;
-        }
-        if (fragmentSource != null) {
-            this.mFragmentShaderSourceCode = fragmentSource;
-        }
-        return this;
-    }
-
     /** not for user call */
     @Override
     public final long getNativeContextPointer() {
@@ -127,31 +152,54 @@ public class CameraJavaView extends CameraView {
     /** not for user call */
     @Override
     public void createShaderAndBuffer() {
-        compileShader();
+        prepareShader(true);
+        if (getFragmentShaderSourceCode() != null) {
+            prepareShader(false);
+        }
         prepareBuffer();
     }
 
     /** not for user call */
     @Override
     public void destroyShaderAndBuffer() {
-        GLES20.glDeleteShader(mVertexShader);
-        GLES20.glDeleteShader(mFragmentShader);
-        GLES20.glDeleteProgram(mProgram);
+        if (mNormalProgram != 0) {
+            GLES20.glDeleteProgram(mNormalProgram);
+        }
+        if (mFilterProgram != 0) {
+            GLES20.glDeleteProgram(mFilterProgram);
+        }
+        mNormalProgram = 0;
+        mFilterProgram = 0;
         /* Notice the direct byte buffer not be freed! */
     }
 
     /** not for user call */
     @Override
     public void drawFrame(int textureId) {
+        if (mNormalProgram != 0) {
+            realDrawFrame(true, textureId);
+        }
+        if (mFilterProgram != 0) {
+            realDrawFrame(false, textureId);
+        }
+    }
+
+    private void realDrawFrame(boolean normal, int textureId) {
         GLES20.glViewport(0, 0, getFrameWidth(), getFrameHeight());
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
 
-        GLES20.glUseProgram(mProgram);
+        final int program;
+        if (normal) {
+            program = mNormalProgram;
+        } else {
+            program = mFilterProgram;
+        }
+        GLES20.glUseProgram(program);
 
-        int positionHandler = GLES20.glGetAttribLocation(mProgram, "aPosition");
-        int textureCoordHandler = GLES20.glGetAttribLocation(mProgram, "aTextureCoord");
-        int textureHandler = GLES20.glGetUniformLocation(mProgram, "sTexture");
+        int positionHandler = GLES20.glGetAttribLocation(program, "aPosition");
+        int textureCoordHandler = GLES20.glGetAttribLocation(program, "aTextureCoord");
+        int textureHandler = GLES20.glGetUniformLocation(program, "sTexture");
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId);
@@ -176,39 +224,99 @@ public class CameraJavaView extends CameraView {
         GLES20.glDisableVertexAttribArray(positionHandler);
         GLES20.glDisableVertexAttribArray(textureCoordHandler);
 
-        if (mFrameRgbaDataCallback != null) {
-            GLES20.glReadPixels(0, 0, getFrameWidth(), getFrameHeight(),
-                    GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, mPixelByteBuffer);
-            mFrameRgbaDataCallback.onFrameRgbaData(mPixelByteBuffer);
+        final OnFrameRgbaDataCallback callback = getOnFrameRgbaDataCallback();
+        if (callback != null) {
+            final int w = getFrameWidth(), h = getFrameHeight();
+            GLES20.glReadPixels(0, 0, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, mPixelByteBuffer);
+            upsideDown(mPixelByteBuffer, w, h, 4 /* RGBA */);
+            callback.onFrameRgbaData(mPixelByteBuffer, normal);
             mPixelByteBuffer.clear();
         }
     }
 
-    private void compileShader() {
-        if (mVertexShaderSourceCode == null || mFragmentShaderSourceCode == null) {
-            throw new IllegalArgumentException("please call CameraView#setShaderSourceCode(String,String) first");
+    private void prepareShader(boolean normal) {
+        System.out.println("prepareShader(normal=" + normal + ")");
+        final int vertexShader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
+        if (vertexShader == 0) {
+            throw new IllegalStateException("vertex shader create failed:"
+                    + GLES20.glGetShaderInfoLog(vertexShader));
         }
-        mVertexShader = GLES20.glCreateShader(GLES20.GL_VERTEX_SHADER);
-        mFragmentShader = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
-        GLES20.glShaderSource(mVertexShader, mVertexShaderSourceCode);
-        GLES20.glShaderSource(mFragmentShader, mFragmentShaderSourceCode);
-        final int[] compileStatus = new int[1];
-        GLES20.glCompileShader(mVertexShader);
-        GLES20.glGetShaderiv(mVertexShader, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
-        if (compileStatus[0] != GLES20.GL_TRUE) {
+        final int fragmentShader = GLES20.glCreateShader(GLES20.GL_FRAGMENT_SHADER);
+        if (fragmentShader == 0) {
+            throw new IllegalStateException("fragment shader create failed:"
+                    + GLES20.glGetShaderInfoLog(vertexShader));
+        }
+        final String vertexShaderSource;
+        final String fragmentShaderSource;
+        if (normal) {
+            vertexShaderSource = defaultVertexShaderSource;
+            switch (getFragmentShaderType()) {
+                case FRAGMENT_SHADER_TYPE_REVERSE_X:
+                    fragmentShaderSource = defaultFragmentShaderSourceX;
+                    break;
+                case FRAGMENT_SHADER_TYPE_REVERSE_Y:
+                    fragmentShaderSource = defaultFragmentShaderSourceY;
+                    break;
+                default:
+                    fragmentShaderSource = defaultFragmentShaderSource;
+                    break;
+            }
+        } else {
+            vertexShaderSource = defaultVertexShaderSource;
+            final String replace_target = "  gl_FragColor = texture2D(sTexture, vTexture);\n";
+            switch (getFragmentShaderType()) {
+                case FRAGMENT_SHADER_TYPE_REVERSE_X: {
+                    fragmentShaderSource = defaultFragmentShaderSourceX
+                            .replace(replace_target, getFragmentShaderSourceCode());
+                }
+                    break;
+                case FRAGMENT_SHADER_TYPE_REVERSE_Y: {
+                    fragmentShaderSource = defaultFragmentShaderSourceY
+                            .replace(replace_target, getFragmentShaderSourceCode());
+                }
+                    break;
+                default: {
+                    fragmentShaderSource = defaultFragmentShaderSource
+                            .replace(replace_target, getFragmentShaderSourceCode());
+                }
+                    break;
+            }
+        }
+        GLES20.glShaderSource(vertexShader, vertexShaderSource);
+        GLES20.glShaderSource(fragmentShader, fragmentShaderSource);
+        final int[] status = new int[1];
+        GLES20.glCompileShader(vertexShader);
+        GLES20.glGetShaderiv(vertexShader, GLES20.GL_COMPILE_STATUS, status, 0);
+        if (status[0] != GLES20.GL_TRUE) {
             throw new IllegalStateException("vertex shader compile failed:"
-                    + GLES20.glGetShaderInfoLog(mVertexShader));
+                    + GLES20.glGetShaderInfoLog(vertexShader));
         }
-        GLES20.glCompileShader(mFragmentShader);
-        GLES20.glGetShaderiv(mFragmentShader, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
-        if (compileStatus[0] != GLES20.GL_TRUE) {
+        GLES20.glCompileShader(fragmentShader);
+        GLES20.glGetShaderiv(fragmentShader, GLES20.GL_COMPILE_STATUS, status, 0);
+        if (status[0] != GLES20.GL_TRUE) {
             throw new IllegalStateException("fragment shader compile failed:"
-                    + GLES20.glGetShaderInfoLog(mFragmentShader));
+                    + GLES20.glGetShaderInfoLog(fragmentShader));
         }
-        mProgram = GLES20.glCreateProgram();
-        GLES20.glAttachShader(mProgram, mVertexShader);
-        GLES20.glAttachShader(mProgram, mFragmentShader);
-        GLES20.glLinkProgram(mProgram);
+        final int program = GLES20.glCreateProgram();
+        if (program == 0) {
+            throw new IllegalStateException("program create failed:"
+                    + GLES20.glGetProgramInfoLog(vertexShader));
+        }
+        GLES20.glAttachShader(program, vertexShader);
+        GLES20.glAttachShader(program, fragmentShader);
+        GLES20.glLinkProgram(program);
+        GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, status, 0);
+        if (status[0] != GLES20.GL_TRUE) {
+            throw new IllegalStateException("program link failed:"
+                    + GLES20.glGetProgramInfoLog(vertexShader));
+        }
+        GLES20.glDeleteShader(vertexShader);
+        GLES20.glDeleteShader(fragmentShader);
+        if (normal) {
+            mNormalProgram = program;
+        } else {
+            mFilterProgram = program;
+        }
     }
 
     private void prepareBuffer() {
@@ -221,7 +329,6 @@ public class CameraJavaView extends CameraView {
         mVertexBuffer.position(0);
 
 		/* Texture buffer */
-        final float[] textureCoords = isFrontCamera() ? frontTextureCoords : backTextureCoords;
         bb = ByteBuffer.allocateDirect(Float.SIZE / Byte.SIZE * textureCoords.length);
         bb.order(ByteOrder.nativeOrder());
         mTextureBuffer = bb.asFloatBuffer();
@@ -236,7 +343,7 @@ public class CameraJavaView extends CameraView {
         mDrawListBuffer.position(0);
 
         /* Pixel buffer */
-        if (mFrameRgbaDataCallback != null) {
+        if (getOnFrameRgbaDataCallback() != null) {
             bb = ByteBuffer.allocateDirect(4 /* RGBA */ * getFrameWidth() * getFrameHeight());
             bb.order(ByteOrder.nativeOrder());
             mPixelByteBuffer = bb;

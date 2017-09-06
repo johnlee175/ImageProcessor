@@ -20,10 +20,12 @@ import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import com.johnsoft.imgproc.camera.FragmentShaderTypePolicy;
+
 import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.hardware.Camera;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -34,6 +36,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 /**
  * Simple Camera Activity. Test on Google Nexus 6P.
@@ -145,15 +148,8 @@ public class SimpleCameraActivity extends AppCompatActivity {
         frameLayout.addView(cameraView, lpCameraView);
         setContentView(frameLayout, lpFrameLayout);
 
-        if (SimpleCameraManager.FACE == Camera.CameraInfo.CAMERA_FACING_FRONT) {
-            if ("Nexus 6P".equals(Build.MODEL)) {
-                cameraView.setFragShaderType(SimpleCameraView.FRAG_SHADER_TYPE_REVERSE_Y);
-            } else {
-                cameraView.setFragShaderType(SimpleCameraView.FRAG_SHADER_TYPE_REVERSE_X);
-            }
-        } else if (SimpleCameraManager.FACE == Camera.CameraInfo.CAMERA_FACING_BACK) {
-            cameraView.setFragShaderType(SimpleCameraView.FRAG_SHADER_TYPE_NORMAL);
-        }
+        FragmentShaderTypePolicy.getDefault().apply(cameraView,
+                SimpleCameraManager.FACE == Camera.CameraInfo.CAMERA_FACING_FRONT);
 
         callbackThread = new SimpleCameraView.TransferThread(sWidth * sHeight * 4) {
             @Override
@@ -169,5 +165,19 @@ public class SimpleCameraActivity extends AppCompatActivity {
         };
         callbackThread.start();
         cameraView.setFrameDataCallback(callbackThread);
+
+        cameraView.setOnTopTrackListener(Configuration.ORIENTATION_LANDSCAPE,
+            new SimpleCameraView.OnTopTrackListener() {
+                @Override
+                public void onTopChanged(boolean correct) {
+                    final String tip;
+                    if (!correct) {
+                        tip = "Top side not on top";
+                    } else {
+                        tip = "Top side back to top";
+                    }
+                    Toast.makeText(SimpleCameraActivity.this, tip, Toast.LENGTH_SHORT).show();
+                }
+        });
     }
 }

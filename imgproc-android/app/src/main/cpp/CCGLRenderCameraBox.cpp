@@ -22,13 +22,13 @@
  */
 #include "CCGLRenderCameraBox.hpp"
 
-static void MyFrameDataCallback(GLRenderCameraBox *glrcbox) {
+static void MyFrameDataCallback(GLRenderCameraBox *glrcbox, GLboolean normal) {
     void *data = glrcbox_get_user_tag(glrcbox);
     camerabox::CCGLRenderCameraBox *box = __static_cast(camerabox::CCGLRenderCameraBox *, data);
     if (box) {
         camerabox::CCFrameDataCallback *callback = box->GetFrameDataCallback();
         if (callback) {
-            callback->OnDataCallback(box);
+            callback->OnDataCallback(box, normal);
         }
     }
 }
@@ -60,8 +60,8 @@ int camerabox::CCGLRenderCameraBox::SetFrameSize(GLuint frameWidth, GLuint frame
     return glrcbox_set_frame_size(this->glrcbox, frameWidth, frameHeight);
 }
 
-int camerabox::CCGLRenderCameraBox::SetFrontCamera(GLboolean isFrontCamera) {
-    return glrcbox_set_front_camera(this->glrcbox, isFrontCamera);
+int camerabox::CCGLRenderCameraBox::SetFragmentShaderType(FragmentShaderType fragmentShaderType) {
+    return glrcbox_set_fragment_shader_type(this->glrcbox, fragmentShaderType);
 }
 
 int camerabox::CCGLRenderCameraBox::SetShaderSource(const GLchar *vertexSource, const GLchar *fragmentSource) {

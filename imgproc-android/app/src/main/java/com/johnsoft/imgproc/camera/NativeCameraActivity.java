@@ -109,16 +109,18 @@ public class NativeCameraActivity extends AppCompatActivity implements CameraVie
     }
 
     @Override
-    public void onFrameRgbaData(ByteBuffer rgba) {
+    public void onFrameRgbaData(ByteBuffer rgba, boolean normal) {
         if (capture) {
-            capture = false;
+            if (!normal) {
+                capture = false;
+            }
             try {
                 final String filePath = "/sdcard/nctest" + System.currentTimeMillis()
                         + "_le_" + NW + 'x' + NH + ".rgba";
                 final FileChannel channel = new RandomAccessFile(filePath, "rwd").getChannel();
                 channel.write(rgba);
                 channel.close();
-                Log.i("NativeCameraActivity", "Capture rgba data in " + filePath);
+                Log.i("NativeCameraActivity", "Capture(normal=" + normal + ") rgba data in " + filePath);
             } catch (IOException e) {
                 Log.w("NativeCameraActivity", e);
             }
@@ -168,7 +170,8 @@ public class NativeCameraActivity extends AppCompatActivity implements CameraVie
                     size.x, size.y);
             lp.gravity = Gravity.CENTER;
             final CameraView cameraView = new CameraNativeView(NativeCameraActivity.this);
-            cameraView.markCameraIndex(cameraIndex).markAsFrontCamera(false);
+            cameraView.markCameraIndex(cameraIndex);
+            FragmentShaderTypePolicy.getDefault().apply(cameraView, false);
             cameraView.setShaderSourceCode(null, CameraActivity.fragShaderCode2);
             cameraView.setOnFrameRgbaDataCallback(callbackThread);
             cameraView.setLayoutParams(lp);

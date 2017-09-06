@@ -51,11 +51,11 @@ public:
         }
     }
 
-    virtual void OnDataCallback(camerabox::CCGLRenderCameraBox *glrcbox) {
+    virtual void OnDataCallback(camerabox::CCGLRenderCameraBox *glrcbox, GLboolean normal) {
         if (vm && method) {
             JNIEnv *env;
             vm->AttachCurrentThread(&env, NULL);
-            env->CallVoidMethod(callback, method, buffer);
+            env->CallVoidMethod(callback, method, buffer, normal ? JNI_TRUE : JNI_FALSE);
         }
     }
 
@@ -154,8 +154,25 @@ JNI_METHOD(void, CameraNativeView, createShaderAndBuffer)(JNI_INSTANCE_PARAM) {
     jlong ptr = jnicchelper_get_native_ctx_ptr(env, thiz);
     camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
 
-    jboolean is_front_camera = jnicchelper_call_method("isFrontCamera", "()Z", Boolean);
-    glrcbox->SetFrontCamera(__static_cast(GLboolean, is_front_camera));
+    MyCallback *myCallback = __static_cast(MyCallback *, glrcbox->GetFrameDataCallback());
+    if (!myCallback) {
+        jnicchelper_throw_exception(env, CAMERA_MANAGE_EXCEPTION,
+                                    "myCallback is NULL which getting from GetFrameDataCallback");
+        return;
+    }
+
+    jint fragment_shader_type = jnicchelper_call_method("getFragmentShaderType", "()I", Int);
+    switch(fragment_shader_type) {
+        case -1:
+            glrcbox->SetFragmentShaderType(REVERSE_X);
+            break;
+        case 1:
+            glrcbox->SetFragmentShaderType(REVERSE_Y);
+            break;
+        default:
+            glrcbox->SetFragmentShaderType(NORMAL);
+            break;
+    }
 
     jint frame_width = jnicchelper_call_method("getFrameWidth", "()I", Int);
     jint frame_height = jnicchelper_call_method("getFrameHeight", "()I", Int);
@@ -165,13 +182,33 @@ JNI_METHOD(void, CameraNativeView, createShaderAndBuffer)(JNI_INSTANCE_PARAM) {
     size_t pixels_size;
     glrcbox->GetPixels(&pixels, &pixels_size);
 
-    MyCallback *myCallback = __static_cast(MyCallback *, glrcbox->GetFrameDataCallback());
+    jobject vertexSource = jnicchelper_call_method("getVertexShaderSourceCode",
+                                                   "()Ljava/lang/String;", Object);
+    jobject fragmentSource = jnicchelper_call_method("getFragmentShaderSourceCode",
+                                                     "()Ljava/lang/String;", Object);
+    const char *vertexShaderSource = NULL;
+    const char *fragmentShaderSource = NULL;
+    if (vertexSource) {
+        jstring jVertexShaderSource = __static_cast(jstring, env->NewGlobalRef(vertexSource));
+        vertexShaderSource = jnicchelper_from_utf_string(env, jVertexShaderSource);
+        myCallback->SetVertexShaderSource(jVertexShaderSource, vertexShaderSource);
+    }
+    if (fragmentSource) {
+        jstring jFragmentShaderSource = __static_cast(jstring, env->NewGlobalRef(fragmentSource));
+        fragmentShaderSource = jnicchelper_from_utf_string(env, jFragmentShaderSource);
+        myCallback->SetFragmentShaderSource(jFragmentShaderSource, fragmentShaderSource);
+    }
+    if (glrcbox->SetShaderSource(vertexShaderSource, fragmentShaderSource) == -1) {
+        jnicchelper_throw_exception(env, CAMERA_MANAGE_EXCEPTION,
+                                    "setShaderSourceCode native method execute error");
+        return;
+    }
 
-    jobject callback = jnicchelper_get_field("mFrameRgbaDataCallback", "Lcom/johnsoft/imgproc/camera/"
+    jobject callback = jnicchelper_call_method("getOnFrameRgbaDataCallback", "()Lcom/johnsoft/imgproc/camera/"
             "CameraView$OnFrameRgbaDataCallback;", Object);
-    if (callback && myCallback) {
+    if (callback) {
         jobject byte_buffer = env->NewDirectByteBuffer(pixels, __static_cast(jlong, pixels_size));
-        jmethodID mid = jnicchelper_obj_method_id(callback, "onFrameRgbaData", "(Ljava/nio/ByteBuffer;)V");
+        jmethodID mid = jnicchelper_obj_method_id(callback, "onFrameRgbaData", "(Ljava/nio/ByteBuffer;Z)V");
         myCallback->SetCallbackParameters(env, mid, callback, byte_buffer);
     }
 
@@ -187,10 +224,10 @@ JNI_METHOD(void, CameraNativeView, destroyShaderAndBuffer)(JNI_INSTANCE_PARAM) {
     camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
 
     MyCallback *myCallback = __static_cast(MyCallback *, glrcbox->GetFrameDataCallback());
-
     if (myCallback) {
         delete myCallback;
     }
+
     if (glrcbox->DestroyShader() < 0) {
         LOGW("call DestroyShader() failed\n");
     }
@@ -205,35 +242,6 @@ JNI_METHOD(void, CameraNativeView, drawFrame)(JNI_INSTANCE_PARAM, jint textureId
                                     "drawFrame native method execute error");
         return;
     }
-}
-
-JNI_METHOD(jobject/* CameraView */, CameraNativeView, setShaderSourceCode)(JNI_INSTANCE_PARAM,
-                                                                           jstring vertexSource,
-                                                                           jstring fragmentSource) {
-    jlong ptr = jnicchelper_get_native_ctx_ptr(env, thiz);
-    camerabox::CCGLRenderCameraBox *glrcbox = __reinterpret_cast(camerabox::CCGLRenderCameraBox *, ptr);
-
-    MyCallback *myCallback = __static_cast(MyCallback *, glrcbox->GetFrameDataCallback());
-    if (myCallback) {
-        const char *vertexShaderSource = NULL;
-        const char *fragmentShaderSource = NULL;
-        if (vertexSource) {
-            jstring jVertexShaderSource = __static_cast(jstring, env->NewGlobalRef(vertexSource));
-            vertexShaderSource = jnicchelper_from_utf_string(env, vertexSource);
-            myCallback->SetVertexShaderSource(jVertexShaderSource, vertexShaderSource);
-        }
-        if (fragmentSource) {
-            jstring jFragmentShaderSource = __static_cast(jstring, env->NewGlobalRef(fragmentSource));
-            fragmentShaderSource = jnicchelper_from_utf_string(env, fragmentSource);
-            myCallback->SetFragmentShaderSource(jFragmentShaderSource, fragmentShaderSource);
-        }
-        if (glrcbox->SetShaderSource(vertexShaderSource, fragmentShaderSource) == -1) {
-            jnicchelper_throw_exception(env, CAMERA_MANAGE_EXCEPTION,
-                                        "setShaderSourceCode native method execute error");
-            return NULL;
-        }
-    }
-    return thiz;
 }
 
 /* ====================== DirectByteBuffers.NativeDirectMemory ====================== */

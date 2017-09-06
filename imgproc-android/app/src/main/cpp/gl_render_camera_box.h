@@ -34,21 +34,23 @@ extern "C" {
 
 /* Begin: you can custom const variable with define GLRCBOX_CONSTANT_DEFINED */
 extern const GLfloat glrcbox_vertex_coords[];
-/*
- * TODO using fragment shader source to fix front camera upside down bug, not coords!
- * TODO see SimpleCameraView
- */
-extern const GLfloat glrcbox_back_texture_coords[];
-extern const GLfloat glrcbox_front_texture_coords[];
+extern const GLfloat glrcbox_texture_coords[];
 extern const GLushort glrcbox_draw_order[];
 extern const GLuint glrcbox_per_vertex_coord_component;
 extern const GLuint glrcbox_per_texture_coord_component;
 extern const GLchar *glrcbox_vertex_shader_source;
 extern const GLchar *glrcbox_fragment_shader_source;
+extern const GLchar *glrcbox_fragment_shader_source_x;
+extern const GLchar *glrcbox_fragment_shader_source_y;
 /* End: you can custom const variable with define GLRCBOX_CONSTANT_DEFINED */
 
+enum FragmentShaderType {
+    NORMAL = 0,
+    REVERSE_X = -1,
+    REVERSE_Y = 1,
+};
 typedef struct tagGLRenderCameraBox GLRenderCameraBox;
-typedef void (*FrameDataCallback)(GLRenderCameraBox *glrcbox);
+typedef void (*FrameDataCallback)(GLRenderCameraBox *glrcbox, GLboolean normal);
 
 extern GLRenderCameraBox *glrcbox_create_initialize();
 extern void glrcbox_destroy_release(GLRenderCameraBox *glrcbox);
@@ -59,7 +61,8 @@ extern int glrcbox_set_frame_data_callback(GLRenderCameraBox *glrcbox,
 extern int glrcbox_set_frame_size(GLRenderCameraBox *glrcbox,
                                   GLuint frame_width,
                                   GLuint frame_height);
-extern int glrcbox_set_front_camera(GLRenderCameraBox *glrcbox, GLboolean is_front_camera);
+extern int glrcbox_set_fragment_shader_type(GLRenderCameraBox *glrcbox,
+                                            enum FragmentShaderType fragment_shader_type);
 extern int glrcbox_set_shader_source(GLRenderCameraBox *glrcbox,
                                      const GLchar *vertex_source,
                                      const GLchar *fragment_source);
