@@ -36,9 +36,13 @@ public:
     virtual void onDataCallback(SimpleCameraView *view) = 0;
 };
 
-enum FragmentShaderType {
+enum EnumFragmentShaderType {
     FST_NORMAL = 0, FST_REVERSE_X = -1, FST_REVERSE_Y = 1
 };
+
+typedef enum EnumFragmentShaderType FragmentShaderType;
+
+class SimpleCameraViewImpl;
 
 class SimpleCameraView {
 public:
@@ -57,31 +61,7 @@ public:
     EGLNativeWindowType GetWindow();
     GLuint ReadPixels(GLubyte **pixels);
 private:
-    EGLNativeWindowType egl_window;
-    EGLDisplay egl_display;
-    EGLConfig egl_config;
-    EGLContext egl_context;
-    EGLSurface egl_surface;
-    GLuint program;
-    GLuint vertex_shader;
-    GLuint fragment_shader;
-    GLuint frame_width;
-    GLuint frame_height;
-    GLubyte *pixels;
-    GLuint pixels_size;
-    FrameDataCallback *frame_data_callback;
-    FragmentShaderType fragment_shader_type;
-private:
-    static void AssembleEglErrorString(GLint error, const char *prefix, char *buffer);
-    static void UpsideDownBuffer(GLubyte *pixels, GLuint width, GLuint height, GLuint channels);
-
-    static const GLfloat vertex_coords[];
-    static const GLfloat texture_coords[];
-    static const GLushort draw_order[];
-    static const GLchar *vertex_shader_source;
-    static const GLchar *fragment_shader_source;
-    static const GLchar *fragment_shader_source_x;
-    static const GLchar *fragment_shader_source_y;
+    SimpleCameraViewImpl *impl;
 };
 
 #endif // EXPR_RECO_SIMPLECAMERAVIEW_HPP

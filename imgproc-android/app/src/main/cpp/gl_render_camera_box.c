@@ -103,7 +103,8 @@ struct tagGLRenderCameraBox {
     GLuint frame_height;
     GLubyte *pixels;
     size_t pixels_size;
-    FrameDataCallback frame_data_callback;
+    FrameDataCallback normal_frame_data_callback;
+    FrameDataCallback filtered_frame_data_callback;
     void *user_tag_data;
 };
 
@@ -220,10 +221,21 @@ void *glrcbox_get_user_tag(GLRenderCameraBox *glrcbox) {
     return NULL;
 }
 
-int glrcbox_set_frame_data_callback(GLRenderCameraBox *glrcbox,
-                                    FrameDataCallback callback_func) {
+int glrcbox_set_frame_data_callback(GLRenderCameraBox *glrcbox, GLboolean force_update,
+                                    FrameDataCallback normal_callback_func,
+                                    FrameDataCallback filtered_callback_func) {
     if (glrcbox) {
-        glrcbox->frame_data_callback = callback_func;
+        if (force_update) {
+            glrcbox->normal_frame_data_callback = normal_callback_func;
+            glrcbox->filtered_frame_data_callback = filtered_callback_func;
+        } else {
+            if (normal_callback_func) {
+                glrcbox->normal_frame_data_callback = normal_callback_func;
+            }
+            if (filtered_callback_func) {
+                glrcbox->filtered_frame_data_callback = filtered_callback_func;
+            }
+        }
         return 0;
     }
     return -1;
@@ -304,7 +316,7 @@ static int glrcbox_do_create_shader(GLRenderCameraBox *glrcbox, GLboolean normal
             LOGW("error occurs in glCreateShader(): %s\n", info_log);
             return -1;
         }
-        const char *vertex_shader_source, *fragment_shader_source;
+        const char *vertex_shader_source = NULL, *fragment_shader_source = NULL;
         if (normal) {
             vertex_shader_source = glrcbox_vertex_shader_source;
             switch(glrcbox->fragment_shader_type) {
@@ -437,6 +449,8 @@ int glrcbox_destroy_shader(GLRenderCameraBox *glrcbox) {
     return -1;
 }
 
+/* TODO use VBO IBO(EBO) VAO, FBO PBO(with DMA) to instead raw glReadPixels, need api >= 19 */
+
 static int glrcbox_do_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id, GLboolean normal) {
     if (glrcbox) {
         glViewport(0, 0, glrcbox->frame_width, glrcbox->frame_height);
@@ -498,7 +512,9 @@ static int glrcbox_do_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id, 
         glDisableVertexAttribArray(position_index);
         glDisableVertexAttribArray(texture_coord_index);
 
-        if (glrcbox->frame_data_callback && glrcbox->pixels) {
+        FrameDataCallback frame_data_callback = normal ? glrcbox->normal_frame_data_callback
+                                                       : glrcbox->filtered_frame_data_callback;
+        if (frame_data_callback && glrcbox->pixels) {
             glReadPixels(0, 0, glrcbox->frame_width, glrcbox->frame_height,
                          GL_RGBA, GL_UNSIGNED_BYTE, glrcbox->pixels);
             /* Open GL (0,0) at lower left corner */
@@ -506,7 +522,7 @@ static int glrcbox_do_draw_frame(GLRenderCameraBox *glrcbox, GLuint texture_id, 
                                     4 /* RGBA */) == -1) {
                 LOGW("call glrcbox_upside_down failed!");
             }
-            glrcbox->frame_data_callback(glrcbox, normal);
+            frame_data_callback(glrcbox);
         }
         return 0;
     }

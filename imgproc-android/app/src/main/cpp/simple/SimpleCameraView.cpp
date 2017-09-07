@@ -23,23 +23,68 @@
 #include "base.h"
 #include "SimpleCameraView.hpp"
 
-const GLfloat SimpleCameraView::vertex_coords[] = {
+class SimpleCameraViewImpl {
+public:
+    static void AssembleEglErrorString(GLint error, const char *prefix, char *buffer);
+    static void UpsideDownBuffer(GLubyte *pixels, GLuint width, GLuint height, GLuint channels);
+private:
+    static const GLfloat vertex_coords[];
+    static const GLfloat texture_coords[];
+    static const GLushort draw_order[];
+    static const GLchar *vertex_shader_source;
+    static const GLchar *fragment_shader_source;
+    static const GLchar *fragment_shader_source_x;
+    static const GLchar *fragment_shader_source_y;
+public:
+    SimpleCameraViewImpl(SimpleCameraView *thiz, FrameDataCallback *callback, GLuint w, GLuint h,
+                     EGLNativeWindowType window, FragmentShaderType type);
+    ~SimpleCameraViewImpl();
+
+    bool CreateEgl();
+    bool SwapBuffers();
+    void DestroyEgl();
+
+    bool CreateShader();
+    bool DrawFrame();
+    void DestroyShader();
+
+    EGLNativeWindowType GetWindow();
+    GLuint ReadPixels(GLubyte **pixels);
+private:
+    SimpleCameraView *interface;
+    EGLNativeWindowType egl_window;
+    EGLDisplay egl_display;
+    EGLConfig egl_config;
+    EGLContext egl_context;
+    EGLSurface egl_surface;
+    GLuint program;
+    GLuint vertex_shader;
+    GLuint fragment_shader;
+    GLuint frame_width;
+    GLuint frame_height;
+    GLubyte *pixels;
+    GLuint pixels_size;
+    FrameDataCallback *frame_data_callback;
+    FragmentShaderType fragment_shader_type;
+};
+
+const GLfloat SimpleCameraViewImpl::vertex_coords[] = {
         -1.0f, 1.0f, 0.0f, /* top left */
         -1.0f, -1.0f, 0.0f, /* bottom left */
         1.0f, -1.0f, 0.0f, /* bottom right */
         1.0f, 1.0f, 0.0f, /* top right */
 };
 
-const GLfloat SimpleCameraView::texture_coords[] = {
+const GLfloat SimpleCameraViewImpl::texture_coords[] = {
         0.0f, 0.0f, /* top left */
         0.0f, 1.0f, /* bottom left */
         1.0f, 1.0f, /* bottom right */
         1.0f, 0.0f, /* top right */
 };
 
-const GLushort SimpleCameraView::draw_order[] = { 0, 1, 2, 0, 2, 3};
+const GLushort SimpleCameraViewImpl::draw_order[] = { 0, 1, 2, 0, 2, 3};
 
-const GLchar *SimpleCameraView::vertex_shader_source = ""
+const GLchar *SimpleCameraViewImpl::vertex_shader_source = ""
         "attribute vec4 aPosition;\n"
         "attribute vec2 aTextureCoord;\n"
         "varying vec2 vTextureCoord;\n"
@@ -48,7 +93,7 @@ const GLchar *SimpleCameraView::vertex_shader_source = ""
         "  vTextureCoord = aTextureCoord;\n"
         "}";
 
-const GLchar *SimpleCameraView::fragment_shader_source = ""
+const GLchar *SimpleCameraViewImpl::fragment_shader_source = ""
         "#extension GL_OES_EGL_image_external : require\n"
         "precision mediump float;\n"
         "varying vec2 vTextureCoord;\n"
@@ -58,11 +103,13 @@ const GLchar *SimpleCameraView::fragment_shader_source = ""
         "}";
 
 // TODO we has three way to show image-filtered texture to user, and save normal texture to callback
-// TODO 1. create two SimpleCameraView to layout in same position, image-filtered's bigger than normal one so that hidden normal
-// TODO 2. create image-filtered fragment shader and program, re-draw frame after draw with normal fragment shader and program
+// TODO 1. create two SimpleCameraView[Impl] to layout in same position,
+// TODO    image-filtered's bigger than normal one so that hidden normal
+// TODO 2. create image-filtered fragment shader and program,
+// TODO    re-draw frame after draw with normal fragment shader and program.
 // TODO 3. create offscreen EGL environment(using eglCreatePbufferSurface()) and draw the normal one.
 
-const GLchar *SimpleCameraView::fragment_shader_source_x = ""
+const GLchar *SimpleCameraViewImpl::fragment_shader_source_x = ""
         "#extension GL_OES_EGL_image_external : require\n"
         "precision mediump float;\n"
         "varying vec2 vTextureCoord;\n"
@@ -73,7 +120,7 @@ const GLchar *SimpleCameraView::fragment_shader_source_x = ""
         "  gl_FragColor = texture2D(sTexture, uv);\n"
         "}";
 
-const GLchar *SimpleCameraView::fragment_shader_source_y = ""
+const GLchar *SimpleCameraViewImpl::fragment_shader_source_y = ""
         "#extension GL_OES_EGL_image_external : require\n"
         "precision mediump float;\n"
         "varying vec2 vTextureCoord;\n"
@@ -84,9 +131,9 @@ const GLchar *SimpleCameraView::fragment_shader_source_y = ""
         "  gl_FragColor = texture2D(sTexture, uv);\n"
         "}";
 
-SimpleCameraView::SimpleCameraView(FrameDataCallback *callback, GLuint w, GLuint h,
+SimpleCameraViewImpl::SimpleCameraViewImpl(SimpleCameraView *thiz, FrameDataCallback *callback, GLuint w, GLuint h,
                                    EGLNativeWindowType window, FragmentShaderType type)
-        :egl_window(NULL), egl_display(NULL), egl_config(NULL), egl_context(NULL),
+        :interface(thiz), egl_window(NULL), egl_display(NULL), egl_config(NULL), egl_context(NULL),
          egl_surface(NULL), program(0), vertex_shader(0), fragment_shader(0),
          frame_width(0), frame_height(0), pixels(NULL), pixels_size(0),
          frame_data_callback(NULL), fragment_shader_type(FST_NORMAL) {
@@ -101,7 +148,7 @@ SimpleCameraView::SimpleCameraView(FrameDataCallback *callback, GLuint w, GLuint
     }
 }
 
-SimpleCameraView::~SimpleCameraView() {
+SimpleCameraViewImpl::~SimpleCameraViewImpl() {
     if (this->frame_data_callback) {
         delete this->frame_data_callback;
     }
@@ -110,7 +157,7 @@ SimpleCameraView::~SimpleCameraView() {
     }
 }
 
-void SimpleCameraView::AssembleEglErrorString(GLint error, const char *prefix, char *buffer) {
+void SimpleCameraViewImpl::AssembleEglErrorString(GLint error, const char *prefix, char *buffer) {
     switch (error) {
         case EGL_SUCCESS:
             sprintf(buffer, "%s %s\n", prefix, "EGL_SUCCESS");
@@ -147,7 +194,7 @@ void SimpleCameraView::AssembleEglErrorString(GLint error, const char *prefix, c
     }
 }
 
-void SimpleCameraView::UpsideDownBuffer(GLubyte *pixels, GLuint width, GLuint height, GLuint channels) {
+void SimpleCameraViewImpl::UpsideDownBuffer(GLubyte *pixels, GLuint width, GLuint height, GLuint channels) {
     if (pixels) {
         const size_t row_size = static_cast<size_t>(width * channels);
         GLubyte *temp_row_pixels = static_cast<GLubyte *>(malloc(row_size));
@@ -167,7 +214,7 @@ void SimpleCameraView::UpsideDownBuffer(GLubyte *pixels, GLuint width, GLuint he
     }
 }
 
-bool SimpleCameraView::CreateEgl() {
+bool SimpleCameraViewImpl::CreateEgl() {
     char buffer[256];
     if ((this->egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY)) == EGL_NO_DISPLAY) {
         AssembleEglErrorString(eglGetError(), "eglGetDisplay failed:", buffer);
@@ -232,7 +279,7 @@ bool SimpleCameraView::CreateEgl() {
     return true;
 }
 
-bool SimpleCameraView::SwapBuffers() {
+bool SimpleCameraViewImpl::SwapBuffers() {
     if (!eglSwapBuffers(this->egl_display, this->egl_surface)) {
         LOGW("Can not swap buffers\n");
         return false;
@@ -240,7 +287,7 @@ bool SimpleCameraView::SwapBuffers() {
     return true;
 }
 
-void SimpleCameraView::DestroyEgl() {
+void SimpleCameraViewImpl::DestroyEgl() {
     eglMakeCurrent(this->egl_display,
                    EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     eglDestroySurface(this->egl_display, this->egl_surface);
@@ -248,7 +295,7 @@ void SimpleCameraView::DestroyEgl() {
     eglTerminate(this->egl_display);
 }
 
-bool SimpleCameraView::CreateShader() {
+bool SimpleCameraViewImpl::CreateShader() {
     if ((this->vertex_shader = glCreateShader(GL_VERTEX_SHADER)) == GL_FALSE) {
         LOGW("error occurs in glCreateShader()\n");
         return false;
@@ -313,7 +360,7 @@ bool SimpleCameraView::CreateShader() {
     return true;
 }
 
-bool SimpleCameraView::DrawFrame() {
+bool SimpleCameraViewImpl::DrawFrame() {
     glViewport(0, 0, this->frame_width, this->frame_height);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -363,23 +410,65 @@ bool SimpleCameraView::DrawFrame() {
         glReadPixels(0, 0, this->frame_width, this->frame_height,
                      GL_RGBA, GL_UNSIGNED_BYTE, this->pixels);
         // Open GL (0,0) at lower left corner
-        SimpleCameraView::UpsideDownBuffer(this->pixels, this->frame_width, this->frame_height, 4);
-        this->frame_data_callback->onDataCallback(this);
+        SimpleCameraViewImpl::UpsideDownBuffer(this->pixels, this->frame_width, this->frame_height, 4);
+        this->frame_data_callback->onDataCallback(this->interface);
     }
     return true;
 }
 
-void SimpleCameraView::DestroyShader() {
+void SimpleCameraViewImpl::DestroyShader() {
     glDeleteShader(this->vertex_shader);
     glDeleteShader(this->fragment_shader);
     glDeleteProgram(this->program);
 }
 
-EGLNativeWindowType SimpleCameraView::GetWindow() {
+EGLNativeWindowType SimpleCameraViewImpl::GetWindow() {
     return this->egl_window;
 }
 
-GLuint SimpleCameraView::ReadPixels(GLubyte **pixels) {
+GLuint SimpleCameraViewImpl::ReadPixels(GLubyte **pixels) {
     *pixels = this->pixels;
     return this->pixels_size;
+}
+
+//////////////// SimpleCameraView ////////////////
+
+SimpleCameraView::SimpleCameraView(FrameDataCallback *callback, GLuint w, GLuint h,
+                                   EGLNativeWindowType window, FragmentShaderType type)
+        :impl(new SimpleCameraViewImpl(this, callback, w, h, window, type)) { }
+
+SimpleCameraView::~SimpleCameraView() {
+    delete impl;
+}
+
+bool SimpleCameraView::CreateEgl() {
+    return impl->CreateEgl();
+}
+
+bool SimpleCameraView::SwapBuffers() {
+    return impl->SwapBuffers();
+}
+
+void SimpleCameraView::DestroyEgl() {
+    impl->DestroyEgl();
+}
+
+bool SimpleCameraView::CreateShader() {
+    return impl->CreateShader();
+}
+
+bool SimpleCameraView::DrawFrame() {
+    return impl->DrawFrame();
+}
+
+void SimpleCameraView::DestroyShader() {
+    impl->DestroyShader();
+}
+
+EGLNativeWindowType SimpleCameraView::GetWindow() {
+    return impl->GetWindow();
+}
+
+GLuint SimpleCameraView::ReadPixels(GLubyte **pixels) {
+    return impl->ReadPixels(pixels);
 }

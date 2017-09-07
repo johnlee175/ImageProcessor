@@ -50,14 +50,15 @@ enum FragmentShaderType {
     REVERSE_Y = 1,
 };
 typedef struct tagGLRenderCameraBox GLRenderCameraBox;
-typedef void (*FrameDataCallback)(GLRenderCameraBox *glrcbox, GLboolean normal);
+typedef void (*FrameDataCallback)(GLRenderCameraBox *glrcbox);
 
 extern GLRenderCameraBox *glrcbox_create_initialize();
 extern void glrcbox_destroy_release(GLRenderCameraBox *glrcbox);
 extern int glrcbox_set_user_tag(GLRenderCameraBox *glrcbox, void *data);
 extern void *glrcbox_get_user_tag(GLRenderCameraBox *glrcbox);
-extern int glrcbox_set_frame_data_callback(GLRenderCameraBox *glrcbox,
-                                           FrameDataCallback callback_func);
+extern int glrcbox_set_frame_data_callback(GLRenderCameraBox *glrcbox, GLboolean force_update,
+                                           FrameDataCallback normal_callback_func,
+                                           FrameDataCallback filtered_callback_func);
 extern int glrcbox_set_frame_size(GLRenderCameraBox *glrcbox,
                                   GLuint frame_width,
                                   GLuint frame_height);

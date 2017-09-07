@@ -69,7 +69,8 @@ public abstract class CameraView extends TextureView
     private String mVertexShaderSourceCode;
     private String mFragmentShaderSourceCode;
 
-    private OnFrameRgbaDataCallback mFrameRgbaDataCallback;
+    private OnFrameRgbaDataCallback mNormalFrameRgbaDataCallback;
+    private OnFrameRgbaDataCallback mFilteredFrameRgbaDataCallback;
 
     public CameraView(Context context) {
         super(context);
@@ -109,13 +110,32 @@ public abstract class CameraView extends TextureView
         return this;
     }
 
-    public CameraView setOnFrameRgbaDataCallback(OnFrameRgbaDataCallback callback) {
+    /** The callback must be called always if view shown normal */
+    public CameraView setNormalFrameRgbaDataCallback(OnFrameRgbaDataCallback callback) {
         if (callback == null) {
-            mFrameRgbaDataCallback = null;
+            mNormalFrameRgbaDataCallback = null;
             return this;
         } else {
             if (mSurface == null) {
-                mFrameRgbaDataCallback = callback;
+                mNormalFrameRgbaDataCallback = callback;
+            } else {
+                System.out.println("#setOnFrameRgbaDataCallback should be call before surface attach");
+            }
+            return this;
+        }
+    }
+
+    /**
+     * The callback will be called only if view shown normal,
+     * and has custom filter with {@link #setShaderSourceCode(String, String)}
+     */
+    public CameraView setFilteredFrameRgbaDataCallback(OnFrameRgbaDataCallback callback) {
+        if (callback == null) {
+            mFilteredFrameRgbaDataCallback = null;
+            return this;
+        } else {
+            if (mSurface == null) {
+                mFilteredFrameRgbaDataCallback = callback;
             } else {
                 System.out.println("#setOnFrameRgbaDataCallback should be call before surface attach");
             }
@@ -204,8 +224,13 @@ public abstract class CameraView extends TextureView
     }
 
     @Native
-    protected OnFrameRgbaDataCallback getOnFrameRgbaDataCallback() {
-        return mFrameRgbaDataCallback;
+    protected OnFrameRgbaDataCallback getNormalFrameRgbaDataCallback() {
+        return mNormalFrameRgbaDataCallback;
+    }
+
+    @Native
+    protected OnFrameRgbaDataCallback getFilteredFrameRgbaDataCallback() {
+        return mFilteredFrameRgbaDataCallback;
     }
 
     @Native
@@ -222,7 +247,7 @@ public abstract class CameraView extends TextureView
     public interface OnFrameRgbaDataCallback {
         /** this method should be processed quickly to make sure extract frame smoothly */
         @Native
-        void onFrameRgbaData(ByteBuffer rgba, boolean normal);
+        void onFrameRgbaData(ByteBuffer rgba);
     }
 
     public static class FrameCallbackThread extends Thread
@@ -230,7 +255,6 @@ public abstract class CameraView extends TextureView
         private final OnFrameRgbaDataCallback callback;
         private final DirectByteBuffers.DirectMemory directMemory;
         private final ByteBuffer buffer;
-        private volatile boolean isNormal;
         private volatile boolean loop;
         private volatile boolean paused;
         private volatile boolean busy;
@@ -290,7 +314,7 @@ public abstract class CameraView extends TextureView
                     }
                     buffer.flip();
                     try {
-                        callback.onFrameRgbaData(buffer, isNormal);
+                        callback.onFrameRgbaData(buffer);
                     } catch (Throwable thr) {
                         thr.printStackTrace();
                     }
@@ -316,11 +340,10 @@ public abstract class CameraView extends TextureView
         }
 
         @Override
-        public void onFrameRgbaData(ByteBuffer rgba, boolean normal) {
+        public void onFrameRgbaData(ByteBuffer rgba) {
             if (!busy) {
                 buffer.put(rgba);
                 rgba.rewind();
-                isNormal = normal;
                 busy = true;
                 sendNotification(null);
             }

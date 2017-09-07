@@ -32,36 +32,33 @@ class CCGLRenderCameraBox;
 class CCFrameDataCallback {
 public:
     virtual ~CCFrameDataCallback() { }
-    virtual void OnDataCallback(CCGLRenderCameraBox *glrcbox, GLboolean normal) = 0;
+    virtual void OnDataCallback(CCGLRenderCameraBox *glrcbox) = 0;
 };
 
 class CCGLRenderCameraBox {
 public:
-    CCGLRenderCameraBox();
-    ~CCGLRenderCameraBox();
-    bool IsInitSuccess();
-    int SetUserTag(void *data);
-    void *GetUserTag();
-    int SetFrameSize(GLuint frameWidth,
-                     GLuint frameHeight);
-    int SetFragmentShaderType(FragmentShaderType fragmentShaderType);
-    int SetShaderSource(const GLchar *vertexSource,
-                        const GLchar *fragmentSource);
-    int GetPixels(GLubyte **pixels, size_t *pixelsSize);
-    int CreateShader();
-    int DestroyShader();
-    int DrawFrame(GLuint textureId);
-    int SetWindow(EGLNativeWindowType window);
-    EGLNativeWindowType GetWindow();
-    int SwapBuffers();
-    int CreateEGL();
-    int DestroyEGL();
-    int SetFrameDataCallback(CCFrameDataCallback *callbackFunc);
-    CCFrameDataCallback *GetFrameDataCallback();
-private:
-    GLRenderCameraBox *glrcbox;
-    void *data; // user tag
-    CCFrameDataCallback *callback;
+    static CCGLRenderCameraBox *create();
+    virtual ~CCGLRenderCameraBox() { };
+    virtual bool IsInitSuccess() = 0;
+    virtual int SetUserTag(void *data) = 0;
+    virtual void *GetUserTag() = 0;
+    virtual int SetFrameSize(GLuint frameWidth, GLuint frameHeight) = 0;
+    virtual int SetFragmentShaderType(enum FragmentShaderType fragmentShaderType) = 0;
+    virtual int SetShaderSource(const GLchar *vertexSource,
+                                const GLchar *fragmentSource) = 0;
+    virtual int GetPixels(GLubyte **pixels, size_t *pixelsSize) = 0;
+    virtual int CreateShader() = 0;
+    virtual int DestroyShader() = 0;
+    virtual int DrawFrame(GLuint textureId) = 0;
+    virtual int SetWindow(EGLNativeWindowType window) = 0;
+    virtual EGLNativeWindowType GetWindow() = 0;
+    virtual int SwapBuffers() = 0;
+    virtual int CreateEGL() = 0;
+    virtual int DestroyEGL() = 0;
+    virtual int SetFrameDataCallback(CCFrameDataCallback *normalCallbackFunc,
+                                     CCFrameDataCallback *filteredCallbackFunc) = 0;
+    virtual CCFrameDataCallback *GetNormalFrameDataCallback() = 0;
+    virtual CCFrameDataCallback *GetFilteredFrameDataCallback() = 0;
 };
 
 }

@@ -224,12 +224,13 @@ public class CameraJavaView extends CameraView {
         GLES20.glDisableVertexAttribArray(positionHandler);
         GLES20.glDisableVertexAttribArray(textureCoordHandler);
 
-        final OnFrameRgbaDataCallback callback = getOnFrameRgbaDataCallback();
+        final OnFrameRgbaDataCallback callback = normal
+                ? getNormalFrameRgbaDataCallback() : getFilteredFrameRgbaDataCallback();
         if (callback != null) {
             final int w = getFrameWidth(), h = getFrameHeight();
             GLES20.glReadPixels(0, 0, w, h, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, mPixelByteBuffer);
             upsideDown(mPixelByteBuffer, w, h, 4 /* RGBA */);
-            callback.onFrameRgbaData(mPixelByteBuffer, normal);
+            callback.onFrameRgbaData(mPixelByteBuffer);
             mPixelByteBuffer.clear();
         }
     }
@@ -343,7 +344,7 @@ public class CameraJavaView extends CameraView {
         mDrawListBuffer.position(0);
 
         /* Pixel buffer */
-        if (getOnFrameRgbaDataCallback() != null) {
+        if (getNormalFrameRgbaDataCallback() != null || getFilteredFrameRgbaDataCallback() != null) {
             bb = ByteBuffer.allocateDirect(4 /* RGBA */ * getFrameWidth() * getFrameHeight());
             bb.order(ByteOrder.nativeOrder());
             mPixelByteBuffer = bb;

@@ -25,7 +25,7 @@ import android.widget.FrameLayout;
  * @author John Kenrinus Lee
  * @version 2017-08-18
  */
-public class NativeCameraActivity extends AppCompatActivity implements CameraView.OnFrameRgbaDataCallback {
+public class NativeCameraActivity extends AppCompatActivity {
     protected static int NH = 960;
     protected static int NW = 1280;
     protected static long delayMillis = 500L;
@@ -35,8 +35,10 @@ public class NativeCameraActivity extends AppCompatActivity implements CameraVie
     private int cameraIndex;
     private FrameLayout layout;
     private volatile boolean hadFullView;
-    private volatile boolean capture;
-    private CameraView.FrameCallbackThread callbackThread;
+    private volatile boolean normalCapture;
+    private volatile boolean filteredCapture;
+    private CameraView.FrameCallbackThread normalCallbackThread;
+    private CameraView.FrameCallbackThread filteredCallbackThread;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,8 +82,11 @@ public class NativeCameraActivity extends AppCompatActivity implements CameraVie
     protected void onDestroy() {
         super.onDestroy();
         CameraManager.singleInstance.close(cameraIndex);
-        if (callbackThread != null) {
-            callbackThread.quit();
+        if (normalCallbackThread != null) {
+            normalCallbackThread.quit();
+        }
+        if (filteredCallbackThread != null) {
+            filteredCallbackThread.quit();
         }
     }
 
@@ -109,25 +114,6 @@ public class NativeCameraActivity extends AppCompatActivity implements CameraVie
     }
 
     @Override
-    public void onFrameRgbaData(ByteBuffer rgba, boolean normal) {
-        if (capture) {
-            if (!normal) {
-                capture = false;
-            }
-            try {
-                final String filePath = "/sdcard/nctest" + System.currentTimeMillis()
-                        + "_le_" + NW + 'x' + NH + ".rgba";
-                final FileChannel channel = new RandomAccessFile(filePath, "rwd").getChannel();
-                channel.write(rgba);
-                channel.close();
-                Log.i("NativeCameraActivity", "Capture(normal=" + normal + ") rgba data in " + filePath);
-            } catch (IOException e) {
-                Log.w("NativeCameraActivity", e);
-            }
-        }
-    }
-
-    @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
             return true;
@@ -138,7 +124,8 @@ public class NativeCameraActivity extends AppCompatActivity implements CameraVie
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
-            capture = true;
+            normalCapture = true;
+            filteredCapture = true;
             return true;
         }
         return super.onKeyUp(keyCode, event);
@@ -158,9 +145,48 @@ public class NativeCameraActivity extends AppCompatActivity implements CameraVie
     private void fullCameraViews() {
         if (!hadFullView) {
             hadFullView = true;
-            callbackThread = new CameraView.FrameCallbackThread(this,
-                    NW * NH * 4, DirectByteBuffers.createNativeDirectMemory());
-            callbackThread.start();
+            normalCallbackThread = new CameraView.FrameCallbackThread(
+                new CameraView.OnFrameRgbaDataCallback() {
+                    @Override
+                    public void onFrameRgbaData(ByteBuffer rgba) {
+                        if (normalCapture) {
+                            normalCapture = false;
+                            try {
+                                final String filePath = "/sdcard/nctest-normal" + System.currentTimeMillis()
+                                        + "_le_" + NW + 'x' + NH + ".rgba";
+                                final FileChannel channel = new RandomAccessFile(filePath, "rwd")
+                                        .getChannel();
+                                channel.write(rgba);
+                                channel.close();
+                                Log.i("NativeCameraActivity", "Capture rgba data in " + filePath);
+                            } catch (IOException e) {
+                                Log.w("NativeCameraActivity", e);
+                            }
+                        }
+                    }
+                }, NW * NH * 4, DirectByteBuffers.createNativeDirectMemory());
+            normalCallbackThread.start();
+            filteredCallbackThread = new CameraView.FrameCallbackThread(
+                new CameraView.OnFrameRgbaDataCallback() {
+                    @Override
+                    public void onFrameRgbaData(ByteBuffer rgba) {
+                        if (filteredCapture) {
+                            filteredCapture = false;
+                            try {
+                                final String filePath = "/sdcard/nctest-filtered" + System.currentTimeMillis()
+                                        + "_le_" + NW + 'x' + NH + ".rgba";
+                                final FileChannel channel = new RandomAccessFile(filePath, "rwd")
+                                        .getChannel();
+                                channel.write(rgba);
+                                channel.close();
+                                Log.i("NativeCameraActivity", "Capture rgba data in " + filePath);
+                            } catch (IOException e) {
+                                Log.w("NativeCameraActivity", e);
+                            }
+                        }
+                    }
+                }, NW * NH * 4, DirectByteBuffers.createNativeDirectMemory());
+            filteredCallbackThread.start();
             Point size = CameraManager.singleInstance.getFrameSize(cameraIndex);
             if (size == null) {
                 Log.w("CameraActivity", "camera frame size return null!");
@@ -173,7 +199,8 @@ public class NativeCameraActivity extends AppCompatActivity implements CameraVie
             cameraView.markCameraIndex(cameraIndex);
             FragmentShaderTypePolicy.getDefault().apply(cameraView, false);
             cameraView.setShaderSourceCode(null, CameraActivity.fragShaderCode2);
-            cameraView.setOnFrameRgbaDataCallback(callbackThread);
+            cameraView.setNormalFrameRgbaDataCallback(normalCallbackThread);
+            cameraView.setFilteredFrameRgbaDataCallback(filteredCallbackThread);
             cameraView.setLayoutParams(lp);
             layout.addView(cameraView, 0, lp);
         }

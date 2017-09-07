@@ -22,93 +22,149 @@
  */
 #include "CCGLRenderCameraBox.hpp"
 
-static void MyFrameDataCallback(GLRenderCameraBox *glrcbox, GLboolean normal) {
+static void MyNormalFrameDataCallback(GLRenderCameraBox *glrcbox) {
     void *data = glrcbox_get_user_tag(glrcbox);
     camerabox::CCGLRenderCameraBox *box = __static_cast(camerabox::CCGLRenderCameraBox *, data);
     if (box) {
-        camerabox::CCFrameDataCallback *callback = box->GetFrameDataCallback();
+        camerabox::CCFrameDataCallback *callback = box->GetNormalFrameDataCallback();
         if (callback) {
-            callback->OnDataCallback(box, normal);
+            callback->OnDataCallback(box);
         }
     }
 }
 
-camerabox::CCGLRenderCameraBox::CCGLRenderCameraBox() {
+static void MyFilteredFrameDataCallback(GLRenderCameraBox *glrcbox) {
+    void *data = glrcbox_get_user_tag(glrcbox);
+    camerabox::CCGLRenderCameraBox *box = __static_cast(camerabox::CCGLRenderCameraBox *, data);
+    if (box) {
+        camerabox::CCFrameDataCallback *callback = box->GetFilteredFrameDataCallback();
+        if (callback) {
+            callback->OnDataCallback(box);
+        }
+    }
+}
+
+namespace camerabox {
+    class CCGLRenderCameraBoxImpl: public CCGLRenderCameraBox {
+    public:
+        CCGLRenderCameraBoxImpl();
+        virtual ~CCGLRenderCameraBoxImpl();
+        virtual bool IsInitSuccess() override;
+        virtual int SetUserTag(void *data) override;
+        virtual void *GetUserTag() override;
+        virtual int SetFrameSize(GLuint frameWidth, GLuint frameHeight) override;
+        virtual int SetFragmentShaderType(enum FragmentShaderType fragmentShaderType) override;
+        virtual int SetShaderSource(const GLchar *vertexSource,
+                                    const GLchar *fragmentSource) override;
+        virtual int GetPixels(GLubyte **pixels, size_t *pixelsSize) override;
+        virtual int CreateShader() override;
+        virtual int DestroyShader() override;
+        virtual int DrawFrame(GLuint textureId) override;
+        virtual int SetWindow(EGLNativeWindowType window) override;
+        virtual EGLNativeWindowType GetWindow() override;
+        virtual int SwapBuffers() override;
+        virtual int CreateEGL() override;
+        virtual int DestroyEGL() override;
+        virtual int SetFrameDataCallback(CCFrameDataCallback *normalCallbackFunc,
+                                         CCFrameDataCallback *filteredCallbackFunc) override;
+        virtual CCFrameDataCallback *GetNormalFrameDataCallback() override;
+        virtual CCFrameDataCallback *GetFilteredFrameDataCallback() override;
+    private:
+        GLRenderCameraBox *glrcbox;
+        void *data; // user tag
+        CCFrameDataCallback *normalCallback;
+        CCFrameDataCallback *filteredCallback;
+    };
+}
+
+camerabox::CCGLRenderCameraBox* camerabox::CCGLRenderCameraBox::create() {
+    return new CCGLRenderCameraBoxImpl;
+}
+
+camerabox::CCGLRenderCameraBoxImpl::CCGLRenderCameraBoxImpl()
+        :glrcbox(nullptr), data(nullptr), normalCallback(nullptr), filteredCallback(nullptr) {
     this->glrcbox = glrcbox_create_initialize();
     glrcbox_set_user_tag(this->glrcbox, this);
 }
 
-camerabox::CCGLRenderCameraBox::~CCGLRenderCameraBox() {
+camerabox::CCGLRenderCameraBoxImpl::~CCGLRenderCameraBoxImpl() {
     glrcbox_set_user_tag(this->glrcbox, nullptr);
     glrcbox_destroy_release(this->glrcbox);
 }
 
-bool camerabox::CCGLRenderCameraBox::IsInitSuccess() {
+bool camerabox::CCGLRenderCameraBoxImpl::IsInitSuccess() {
     return this->glrcbox != nullptr;
 }
 
-int camerabox::CCGLRenderCameraBox::SetUserTag(void *data) {
+int camerabox::CCGLRenderCameraBoxImpl::SetUserTag(void *data) {
     this->data = data;
     return 0;
 }
 
-void *camerabox::CCGLRenderCameraBox::GetUserTag() {
+void *camerabox::CCGLRenderCameraBoxImpl::GetUserTag() {
     return this->data;
 }
 
-int camerabox::CCGLRenderCameraBox::SetFrameSize(GLuint frameWidth, GLuint frameHeight) {
+int camerabox::CCGLRenderCameraBoxImpl::SetFrameSize(GLuint frameWidth, GLuint frameHeight) {
     return glrcbox_set_frame_size(this->glrcbox, frameWidth, frameHeight);
 }
 
-int camerabox::CCGLRenderCameraBox::SetFragmentShaderType(FragmentShaderType fragmentShaderType) {
+int camerabox::CCGLRenderCameraBoxImpl::SetFragmentShaderType(enum FragmentShaderType fragmentShaderType) {
     return glrcbox_set_fragment_shader_type(this->glrcbox, fragmentShaderType);
 }
 
-int camerabox::CCGLRenderCameraBox::SetShaderSource(const GLchar *vertexSource, const GLchar *fragmentSource) {
+int camerabox::CCGLRenderCameraBoxImpl::SetShaderSource(const GLchar *vertexSource, const GLchar *fragmentSource) {
     return glrcbox_set_shader_source(this->glrcbox, vertexSource, fragmentSource);
 }
 
-int camerabox::CCGLRenderCameraBox::GetPixels(GLubyte **pixels, size_t *pixelsSize) {
+int camerabox::CCGLRenderCameraBoxImpl::GetPixels(GLubyte **pixels, size_t *pixelsSize) {
     return glrcbox_get_pixels(this->glrcbox, pixels, pixelsSize);
 }
 
-int camerabox::CCGLRenderCameraBox::CreateShader() {
+int camerabox::CCGLRenderCameraBoxImpl::CreateShader() {
     return glrcbox_create_shader(this->glrcbox);
 }
 
-int camerabox::CCGLRenderCameraBox::DestroyShader() {
+int camerabox::CCGLRenderCameraBoxImpl::DestroyShader() {
     return glrcbox_destroy_shader(this->glrcbox);
 }
 
-int camerabox::CCGLRenderCameraBox::DrawFrame(GLuint textureId) {
+int camerabox::CCGLRenderCameraBoxImpl::DrawFrame(GLuint textureId) {
     return glrcbox_draw_frame(this->glrcbox, textureId);
 }
 
-int camerabox::CCGLRenderCameraBox::SetWindow(EGLNativeWindowType window) {
+int camerabox::CCGLRenderCameraBoxImpl::SetWindow(EGLNativeWindowType window) {
     return glrcbox_set_window(this->glrcbox, window);
 }
 
-EGLNativeWindowType camerabox::CCGLRenderCameraBox::GetWindow() {
+EGLNativeWindowType camerabox::CCGLRenderCameraBoxImpl::GetWindow() {
     return glrcbox_get_window(this->glrcbox);
 }
 
-int camerabox::CCGLRenderCameraBox::SwapBuffers() {
+int camerabox::CCGLRenderCameraBoxImpl::SwapBuffers() {
     return glrcbox_swap_buffers(this->glrcbox);
 }
 
-int camerabox::CCGLRenderCameraBox::CreateEGL() {
+int camerabox::CCGLRenderCameraBoxImpl::CreateEGL() {
     return glrcbox_create_egl(this->glrcbox);
 }
 
-int camerabox::CCGLRenderCameraBox::DestroyEGL() {
+int camerabox::CCGLRenderCameraBoxImpl::DestroyEGL() {
     return glrcbox_destroy_egl(this->glrcbox);
 }
 
-int camerabox::CCGLRenderCameraBox::SetFrameDataCallback(camerabox::CCFrameDataCallback *callbackFunc) {
-    this->callback = callbackFunc;
-    return glrcbox_set_frame_data_callback(this->glrcbox, MyFrameDataCallback);
+int camerabox::CCGLRenderCameraBoxImpl::SetFrameDataCallback(camerabox::CCFrameDataCallback *normalCallbackFunc,
+                                                         camerabox::CCFrameDataCallback *filteredCallbackFunc) {
+    this->normalCallback = normalCallbackFunc;
+    this->filteredCallback = filteredCallbackFunc;
+    return glrcbox_set_frame_data_callback(this->glrcbox, GL_FALSE,
+                                           MyNormalFrameDataCallback, MyFilteredFrameDataCallback);
 }
 
-camerabox::CCFrameDataCallback *camerabox::CCGLRenderCameraBox::GetFrameDataCallback() {
-    return this->callback;
+camerabox::CCFrameDataCallback *camerabox::CCGLRenderCameraBoxImpl::GetNormalFrameDataCallback() {
+    return this->normalCallback;
+}
+
+camerabox::CCFrameDataCallback *camerabox::CCGLRenderCameraBoxImpl::GetFilteredFrameDataCallback() {
+    return this->filteredCallback;
 }

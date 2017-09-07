@@ -171,7 +171,7 @@ public class PipActivity extends AppCompatActivity implements CameraView.OnFrame
 
             cameraView = new CameraJavaView(PipActivity.this);
             cameraView.markCameraIndex(frontCameraIndex)
-                      .setOnFrameRgbaDataCallback(callbackThread);
+                      .setNormalFrameRgbaDataCallback(callbackThread);
             FragmentShaderTypePolicy.getDefault().apply(cameraView, true);
             cameraView.setLayoutParams(lpFront);
             layout.addView(cameraView, 1, lpFront);
@@ -179,7 +179,7 @@ public class PipActivity extends AppCompatActivity implements CameraView.OnFrame
     }
 
     @Override
-    public void onFrameRgbaData(ByteBuffer rgba, boolean normal) {
+    public void onFrameRgbaData(ByteBuffer rgba) {
         if (capture) {
             capture = false;
             try {
