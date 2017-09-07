@@ -124,8 +124,11 @@ public class CameraActivity extends AppCompatActivity {
         frontCameraIndex = CameraManager.cameraIndex(true);
         CameraManager.singleInstance.flag(backCameraIndex, true, true, false);
         CameraManager.singleInstance.flag(frontCameraIndex, true, true, false);
-        CameraManager.singleInstance.open(backCameraIndex, previewSizeChooser);
-        CameraManager.singleInstance.open(frontCameraIndex, previewSizeChooser);
+        CameraManager.PreviewFpsRangeChooser fpsChooser = new CameraManager
+                .PolicyPreviewFpsRangeChooser(CameraManager
+                .PolicyPreviewFpsRangeChooser.POLICY_MAX_MINVALUE);
+        CameraManager.singleInstance.open(backCameraIndex, previewSizeChooser, fpsChooser);
+        CameraManager.singleInstance.open(frontCameraIndex, previewSizeChooser, fpsChooser);
     }
 
     @Override

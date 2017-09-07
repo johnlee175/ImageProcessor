@@ -75,7 +75,7 @@ public class NativeCameraActivity extends AppCompatActivity {
                 .DefaultPreviewSizeChooser(NW, NH);
         cameraIndex = CameraManager.cameraIndex(false);
         CameraManager.singleInstance.flag(cameraIndex, true, true, false);
-        CameraManager.singleInstance.open(cameraIndex, previewSizeChooser);
+        CameraManager.singleInstance.open(cameraIndex, previewSizeChooser, null);
     }
 
     @Override

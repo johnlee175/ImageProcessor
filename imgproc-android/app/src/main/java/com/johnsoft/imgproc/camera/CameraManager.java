@@ -134,6 +134,212 @@ public enum CameraManager {
         }
     }
 
+    public interface PreviewFpsRangeChooser {
+        int[] chooseFpsRange(List<int[]> ranges);
+    }
+
+    public static class PolicyPreviewFpsRangeChooser implements PreviewFpsRangeChooser {
+        /**
+         * Find max([0]), if conflict then find max([1]).<br>
+         * If camera support following fps range:<br>
+         * (10000, 15000), (15000, 15000), (15000, 30000), (15000, 20000), (10000, 30000), (30000, 30000), (30000, 32000),<br>
+         * then (30000, 32000) will be picked.
+         */
+        public static final int POLICY_MAX_MINVALUE = 1;
+        /**
+         * Find min([1]), if conflict then find min([0]).<br>
+         * If camera support following fps range:<br>
+         * (10000, 15000), (15000, 15000), (15000, 30000), (15000, 20000), (10000, 30000), (30000, 30000), (30000, 32000),<br>
+         * then (10000, 15000) will be picked.
+         */
+        public static final int POLICY_MIN_MAXVALUE = 2;
+        /**
+         * Find min([0]), if conflict then find max([1]).<br>
+         * If camera support following fps range:<br>
+         * (10000, 15000), (15000, 15000), (15000, 30000), (15000, 20000), (10000, 30000), (30000, 30000), (30000, 32000),<br>
+         * then (10000, 30000) will be picked.
+         */
+        public static final int POLICY_MIN_MAX_RANGE = 3;
+        /**
+         * Find max([1]), if conflict then find min([0]).<br>
+         * If camera support following fps range:<br>
+         * (10000, 15000), (15000, 15000), (15000, 30000), (15000, 20000), (10000, 30000), (30000, 30000), (30000, 32000),<br>
+         * then (30000, 32000) will be picked.
+         */
+        public static final int POLICY_MAX_MIN_RANGE = 4;
+        /**
+         * Find min([0]), if conflict then find min([1]).<br>
+         * If camera support following fps range:<br>
+         * (10000, 15000), (15000, 15000), (15000, 30000), (15000, 20000), (10000, 30000), (30000, 30000), (30000, 32000),<br>
+         * then (10000, 15000) will be picked.
+         */
+        public static final int POLICY_MIN_MINVALUE = 5;
+        /**
+         * Find max([1]), if conflict then find max([0]).<br>
+         * If camera support following fps range:<br>
+         * (10000, 15000), (15000, 15000), (15000, 30000), (15000, 20000), (10000, 30000), (30000, 30000), (30000, 32000),<br>
+         * then (30000, 32000) will be picked.
+         */
+        public static final int POLICY_MAX_MAXVALUE = 6;
+        /**
+         * Find max range using [1] - [0], if conflict then pick max [1] one.<br>
+         * If camera support following fps range:<br>
+         * (10000, 15000), (15000, 15000), (15000, 30000), (15000, 20000), (10000, 30000), (30000, 30000), (15000, 35000),<br>
+         * then (15000, 35000) will be picked.
+         */
+        public static final int POLICY_MAXRANGE_MAX = 7;
+        /**
+         * Find max range using [1] - [0], if conflict then pick min [0] one.<br>
+         * If camera support following fps range:<br>
+         * (10000, 15000), (15000, 15000), (15000, 30000), (15000, 20000), (10000, 30000), (30000, 30000), (15000, 35000),<br>
+         * then (10000, 30000) will be picked.
+         */
+        public static final int POLICY_MAXRANGE_MIN = 8;
+
+        private final int policy;
+
+        public PolicyPreviewFpsRangeChooser(int policy) {
+            this.policy = policy;
+        }
+
+        @Override
+        public int[] chooseFpsRange(List<int[]> ranges) {
+            if (ranges == null || ranges.isEmpty()) {
+                return new int[2];
+            }
+            switch (policy) {
+                case POLICY_MAX_MINVALUE:
+                    return chooseFpsRangeMaxMinValue(ranges);
+                case POLICY_MIN_MAXVALUE:
+                    return chooseFpsRangeMinMaxValue(ranges);
+                case POLICY_MIN_MAX_RANGE:
+                    return chooseFpsRangeMinMaxRange(ranges);
+                case POLICY_MAX_MIN_RANGE:
+                    return chooseFpsRangeMaxMinRange(ranges);
+                case POLICY_MIN_MINVALUE:
+                    return chooseFpsRangeMinMinValue(ranges);
+                case POLICY_MAX_MAXVALUE:
+                    return chooseFpsRangeMaxMaxValue(ranges);
+                case POLICY_MAXRANGE_MAX:
+                    return chooseFpsRangeMaxRangeMax(ranges);
+                case POLICY_MAXRANGE_MIN:
+                    return chooseFpsRangeMaxRangeMin(ranges);
+                default:
+                    throw new IllegalArgumentException("Unknown policy!");
+            }
+        }
+
+        private int[] chooseFpsRangeMaxMinValue(List<int[]> ranges) {
+            int[] benchmarking = ranges.get(0);
+            final int size = ranges.size();
+            int[] temp;
+            for (int i = 1; i < size; ++i) {
+                temp = ranges.get(i);
+                if ((temp[0] > benchmarking[0]) || (temp[0] == benchmarking[0] && temp[1] > benchmarking[1])) {
+                    benchmarking = temp;
+                }
+            }
+            return benchmarking;
+        }
+
+        private int[] chooseFpsRangeMinMaxValue(List<int[]> ranges) {
+            int[] benchmarking = ranges.get(0);
+            final int size = ranges.size();
+            int[] temp;
+            for (int i = 1; i < size; ++i) {
+                temp = ranges.get(i);
+                if ((temp[1] < benchmarking[1]) || (temp[1] == benchmarking[1] && temp[0] < benchmarking[0])) {
+                    benchmarking = temp;
+                }
+            }
+            return benchmarking;
+        }
+
+        private int[] chooseFpsRangeMinMaxRange(List<int[]> ranges) {
+            int[] benchmarking = ranges.get(0);
+            final int size = ranges.size();
+            int[] temp;
+            for (int i = 1; i < size; ++i) {
+                temp = ranges.get(i);
+                if ((temp[0] < benchmarking[0]) || (temp[0] == benchmarking[0] && temp[1] > benchmarking[1])) {
+                    benchmarking = temp;
+                }
+            }
+            return benchmarking;
+        }
+
+        private int[] chooseFpsRangeMaxMinRange(List<int[]> ranges) {
+            int[] benchmarking = ranges.get(0);
+            final int size = ranges.size();
+            int[] temp;
+            for (int i = 1; i < size; ++i) {
+                temp = ranges.get(i);
+                if ((temp[1] > benchmarking[1]) || (temp[1] == benchmarking[1] && temp[0] < benchmarking[0])) {
+                    benchmarking = temp;
+                }
+            }
+            return benchmarking;
+        }
+
+        private int[] chooseFpsRangeMinMinValue(List<int[]> ranges) {
+            int[] benchmarking = ranges.get(0);
+            final int size = ranges.size();
+            int[] temp;
+            for (int i = 1; i < size; ++i) {
+                temp = ranges.get(i);
+                if ((temp[0] < benchmarking[0]) || (temp[0] == benchmarking[0] && temp[1] < benchmarking[1])) {
+                    benchmarking = temp;
+                }
+            }
+            return benchmarking;
+        }
+
+        private int[] chooseFpsRangeMaxMaxValue(List<int[]> ranges) {
+            int[] benchmarking = ranges.get(0);
+            final int size = ranges.size();
+            int[] temp;
+            for (int i = 1; i < size; ++i) {
+                temp = ranges.get(i);
+                if ((temp[1] > benchmarking[1]) || (temp[1] == benchmarking[1] && temp[0] > benchmarking[0])) {
+                    benchmarking = temp;
+                }
+            }
+            return benchmarking;
+        }
+
+        private int[] chooseFpsRangeMaxRangeMax(List<int[]> ranges) {
+            int[] benchmarking = ranges.get(0);
+            int benchmarking_range = benchmarking[1] - benchmarking[0];
+            final int size = ranges.size();
+            int[] temp;
+            int temp_range;
+            for (int i = 1; i < size; ++i) {
+                temp = ranges.get(i);
+                temp_range = temp[1] - temp[0];
+                if ((temp_range > benchmarking_range) || (temp_range == benchmarking_range && temp[1] > benchmarking[1])) {
+                    benchmarking = temp;
+                }
+            }
+            return benchmarking;
+        }
+
+        private int[] chooseFpsRangeMaxRangeMin(List<int[]> ranges) {
+            int[] benchmarking = ranges.get(0);
+            int benchmarking_range = benchmarking[1] - benchmarking[0];
+            final int size = ranges.size();
+            int[] temp;
+            int temp_range;
+            for (int i = 1; i < size; ++i) {
+                temp = ranges.get(i);
+                temp_range = temp[1] - temp[0];
+                if ((temp_range > benchmarking_range) || (temp_range == benchmarking_range && temp[0] < benchmarking[0])) {
+                    benchmarking = temp;
+                }
+            }
+            return benchmarking;
+        }
+    }
+
     public interface GLTextureViewClient {
         SurfaceTexture getSurfaceTexture();
         void createShaderAndBuffer();
@@ -469,16 +675,18 @@ public enum CameraManager {
         private final Point frameSize;
         private final Camera camera;
         private final GLRenderClientManager clientManager;
+        private final boolean needAutoFocus;
         private final SurfaceTexture cameraPreviewSurfaceTexture;
         private final int cameraPreviewTextureId;
         private ScheduledFuture<?> scheduledFuture;
 
         public CameraInterface(int cameraIndex, Point frameSize, Camera camera,
-                               GLRenderClientManager clientManager) {
+                               GLRenderClientManager clientManager, boolean needAutoFocus) {
             this.cameraIndex = cameraIndex;
             this.frameSize = frameSize;
             this.camera = camera;
             this.clientManager = clientManager;
+            this.needAutoFocus = needAutoFocus;
             int id;
             try {
                 final int textures[] = new int[1];
@@ -495,25 +703,30 @@ public enum CameraManager {
             clientManager.setSurfaceTextureHolder(this);
             camera.setPreviewTexture(cameraPreviewSurfaceTexture);
             camera.startPreview();
+            if (!needAutoFocus) {
+                camera.cancelAutoFocus();
+            }
             cameraPreviewSurfaceTexture.setOnFrameAvailableListener(clientManager);
             try {
                 cameraPreviewSurfaceTexture.detachFromGLContext();
             } catch (Throwable thr) {
                 /* ignored */
             }
-            scheduledFuture = singleScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
-                @Override
-                public void run() {
-                    camera.autoFocus(null);
-                }
-            }, 4000L, 2000L, TimeUnit.MILLISECONDS);
+            if (needAutoFocus) {
+                scheduledFuture = singleScheduledExecutor.scheduleWithFixedDelay(new Runnable() {
+                    @Override
+                    public void run() {
+                        camera.autoFocus(null);
+                    }
+                }, 4000L, 2000L, TimeUnit.MILLISECONDS);
+            }
         }
 
         public void stopPreview() throws Exception {
-            if (scheduledFuture != null) {
+            if (needAutoFocus && scheduledFuture != null) {
                 scheduledFuture.cancel(true);
+                scheduledFuture = null;
             }
-            scheduledFuture = null;
             camera.stopPreview();
             cameraPreviewSurfaceTexture.setOnFrameAvailableListener(null);
         }
@@ -666,8 +879,7 @@ public enum CameraManager {
         }
     }
 
-    // TODO we need a preview fps range chooser like PreviewSizeChooser
-    public synchronized void open(int cameraIndex, PreviewSizeChooser chooser) {
+    public synchronized void open(int cameraIndex, PreviewSizeChooser sizeChooser, PreviewFpsRangeChooser fpsChooser) {
         try {
             final ConditionController controller = flagMap.get(cameraIndex);
             if (controller != null && !controller.openBegin()) {
@@ -676,15 +888,25 @@ public enum CameraManager {
             if (map.get(cameraIndex) == null) {
                 final Camera currentCamera = Camera.open(cameraIndex);
                 final Camera.Parameters params = currentCamera.getParameters();
-                final Camera.Size frameSize = chooser.chooseSize(params.getSupportedPreviewSizes());
+                final Camera.Size frameSize = sizeChooser.chooseSize(params.getSupportedPreviewSizes());
                 params.setPreviewSize(frameSize.width, frameSize.height);
+                if (fpsChooser != null) {
+                    final int[] fpsRange = fpsChooser.chooseFpsRange(params.getSupportedPreviewFpsRange());
+                    params.setPreviewFpsRange(fpsRange[Camera.Parameters.PREVIEW_FPS_MIN_INDEX],
+                            fpsRange[Camera.Parameters.PREVIEW_FPS_MAX_INDEX]);
+                }
+                boolean needAutoFocus = false;
                 final List<String> focusModes = params.getSupportedFocusModes();
-                if(focusModes.contains("continuous-video")){
+                if(focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO)){
                     params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+                } else if (focusModes.contains(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
+                    params.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+                } else {
+                    needAutoFocus = true;
                 }
                 currentCamera.setParameters(params);
                 map.put(cameraIndex, new CameraInterface(cameraIndex, new Point(frameSize.width, frameSize.height),
-                        currentCamera, new GLRenderClientManager()));
+                        currentCamera, new GLRenderClientManager(), needAutoFocus));
             }
             if (controller != null) {
                 controller.openEnd();

@@ -90,10 +90,13 @@ public class PipActivity extends AppCompatActivity implements CameraView.OnFrame
         frontCameraIndex = CameraManager.cameraIndex(true);
         CameraManager.singleInstance.flag(backCameraIndex, true, true, false);
         CameraManager.singleInstance.flag(frontCameraIndex, true, true, false);
+        CameraManager.PreviewFpsRangeChooser fpsChooser = new CameraManager
+                .PolicyPreviewFpsRangeChooser(CameraManager
+                .PolicyPreviewFpsRangeChooser.POLICY_MAX_MAXVALUE);
         CameraManager.singleInstance.open(backCameraIndex, new CameraManager
-                .CachedPreviewSizeChooser(screenSize.x, screenSize.y));
+                .CachedPreviewSizeChooser(screenSize.x, screenSize.y), fpsChooser);
         CameraManager.singleInstance.open(frontCameraIndex, new CameraManager
-                .CachedPreviewSizeChooser(testSize.x, testSize.y));
+                .CachedPreviewSizeChooser(testSize.x, testSize.y), fpsChooser);
     }
 
     @Override
