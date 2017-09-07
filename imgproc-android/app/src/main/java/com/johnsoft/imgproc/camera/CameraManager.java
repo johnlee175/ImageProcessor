@@ -666,6 +666,7 @@ public enum CameraManager {
         }
     }
 
+    // TODO we need a preview fps range chooser like PreviewSizeChooser
     public synchronized void open(int cameraIndex, PreviewSizeChooser chooser) {
         try {
             final ConditionController controller = flagMap.get(cameraIndex);
