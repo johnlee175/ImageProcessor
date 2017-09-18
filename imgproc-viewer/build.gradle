@@ -10,6 +10,9 @@ jar {
         attributes 'Main-Class': 'com.johnsoft.viewer.ImageViewer'
     }
     version '1.0.0'
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }
 }
 
 repositories {
@@ -21,4 +24,5 @@ dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'org.openjdk.jmh:jmh-core:1.8'
     compile 'org.openjdk.jmh:jmh-generator-annprocess:1.8'
+    compile 'com.github.pcj:google-options:1.0.0'
 }

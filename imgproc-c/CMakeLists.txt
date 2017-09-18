@@ -101,3 +101,70 @@ target_link_libraries(image_test png jpeg gif webp)
 
 file(COPY src/main/resources DESTINATION ./output/)
 #end image-io
+
+#begin glbox
+set(CMAKE_C_STANDARD 99)
+
+find_package(OpenGL REQUIRED)
+message("OPENGL_FOUND=${OPENGL_FOUND}")
+message("OPENGL_GLU_FOUND=${OPENGL_GLU_FOUND}")
+message("OPENGL_INCLUDE_DIR=${OPENGL_INCLUDE_DIR}")
+message("OPENGL_LIBRARIES=${OPENGL_LIBRARIES}")
+message("OPENGL_gl_LIBRARY=${OPENGL_gl_LIBRARY}")
+message("OPENGL_glu_LIBRARY=${OPENGL_glu_LIBRARY}")
+
+find_package(PkgConfig REQUIRED)
+message("PkgConfig_FOUND=${PkgConfig_FOUND}")
+# 1. "cmake --help-module-list` to see the find_package work target;
+# 2. "pkg-config --list-all` to see all config;
+# 3. add /*/glfw/<version>/lib/pkgconfig/ to $PKG_CONFIG_PATH,
+#    or make sure the *.pc file in /usr/lib/pkgconfig/ or /usr/local/lib/pkgconfig/;
+pkg_search_module(GLEW REQUIRED glew glew2 libglew)
+message("GLEW: PKG_CONFIG_FOUND=${PKG_CONFIG_FOUND}")
+pkg_search_module(GLFW REQUIRED glfw glfw3 libglfw)
+message("GLFW: PKG_CONFIG_FOUND=${PKG_CONFIG_FOUND}")
+pkg_search_module(FREEGLUT REQUIRED freeglut freeglut3 libfreeglut)
+message("FREEGLUT: PKG_CONFIG_FOUND=${PKG_CONFIG_FOUND}")
+
+include_directories(${GLEW_INCLUDEDIR} ${GLFW_INCLUDEDIR} ${FREEGLUT_INCLUDEDIR})
+message("\n
+         GLEW_INCLUDEDIR=${GLEW_INCLUDEDIR}\n
+         GLFW_INCLUDEDIR=${GLFW_INCLUDEDIR}\n
+         FREEGLUT_INCLUDEDIR=${FREEGLUT_INCLUDEDIR}")
+
+link_directories(${GLEW_LIBDIR} ${GLFW_LIBDIR} ${FREEGLUT_LIBDIR})
+message("\n
+         GLEW_LIBDIR=${GLEW_LIBDIR}\n
+         GLFW_LIBDIR=${GLFW_LIBDIR}\n
+         FREEGLUT_LIBDIR=${FREEGLUT_LIBDIR}")
+
+set(LIB_DEPENDENCIES ${GLEW_LIBRARIES} ${GLFW_LIBRARIES} ${FREEGLUT_LIBRARIES})
+
+if(APPLE)
+    file(GLOB_RECURSE GLBOX_SOURCES src/main/cpp/glbox/macosx/*.c)
+endif ()
+
+add_library(glbox SHARED ${GLBOX_SOURCES}
+        src/main/cpp/glbox/gpu_image.c
+        src/main/cpp/glbox/SimpleGpuProc_jni.c)
+
+if(APPLE)
+    message("APPLE")
+    set_target_properties(glbox PROPERTIES
+            PREFIX "lib" OUTPUT_NAME "glbox-$ENV{APP_VERSION}" SUFFIX ".jnilib")
+elseif(UNIX)
+    message("UNIX")
+    set_target_properties(glbox PROPERTIES
+            PREFIX "lib" OUTPUT_NAME "glbox-$ENV{APP_VERSION}" SUFFIX ".so")
+else()
+    message("WINDOWS")
+    set_target_properties(glbox PROPERTIES
+            PREFIX "" OUTPUT_NAME "glbox-$ENV{APP_VERSION}" SUFFIX ".dll")
+    set(CMAKE_GNUtoMS ON)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static-libgcc")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+endif()
+
+target_link_libraries(glbox ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${LIB_DEPENDENCIES})
+
+#end glbox

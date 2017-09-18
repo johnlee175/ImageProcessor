@@ -48,6 +48,7 @@ import com.johnsoft.swing.actions.ChartHistogramAction;
 import com.johnsoft.swing.actions.DelegateAction;
 import com.johnsoft.swing.actions.FilterColorPictureAction;
 import com.johnsoft.swing.actions.FilterGreyPictureAction;
+import com.johnsoft.swing.actions.GpuImageProcAction;
 import com.johnsoft.swing.actions.PlaneCombineBitAction;
 import com.johnsoft.swing.actions.PlaneSliceColorBitAction;
 import com.johnsoft.swing.actions.PlaneSliceColorCompAction;
@@ -174,6 +175,8 @@ public class SwingUiFace implements UiFace {
             return new SimpleHistEqualizeAction(BaseImageProc.COMPONENT_BLUE);
         } else if ("Filter-Simple-Histogram-Equalization-Color".equals(command)) {
             return new SimpleHistEqualizeAction(BaseImageProc.TYPE_ARGB_COLOR);
+        } else if ("Filter-GPU-normal".equals(command)) {
+            return new GpuImageProcAction();
         } else if ("Chart-Histogram".equals(command)) {
             return new ChartHistogramAction();
         }

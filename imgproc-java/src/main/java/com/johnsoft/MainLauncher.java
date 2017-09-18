@@ -65,6 +65,9 @@ public class MainLauncher {
                         face.getAction("Filter-Simple-Histogram-Equalization-Blue"))
                 .addMenuItem("Simple Histogram Equalization", "All",
                         face.getAction("Filter-Simple-Histogram-Equalization-Color"))
+                .addSubMenu("Filter", "GPU")
+                .addMenuItem("GPU", "normal",
+                        face.getAction("Filter-GPU-normal"))
                 .addMenuItem("Chart", "Histogram",
                         face.getAction("Chart-Histogram"))
                 .assemble();

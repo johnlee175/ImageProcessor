@@ -236,7 +236,7 @@ typedef unsigned long long  uint64_t;
 #   define NO_EXPORT
 #   define IMPORT __declspec(dllimport)
 #elif defined(is_best_compiler)
-#   define EXPORT __attribute__((visibility("default"))
+#   define EXPORT __attribute__((visibility("default")))
 #   define NO_EXPORT __attribute__((visibility("hidden")))
 #   define IMPORT
 #else /* !is_best_compiler && !is_msvc_compiler */
