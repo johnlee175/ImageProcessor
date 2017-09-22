@@ -102,7 +102,7 @@ JNI_METHOD(jintArray, nativeImageProc)(JNIEnv *env, jobject thiz, jintArray argb
         THROW_EXCEPTION("malloc process_flags[GProcessFlags] failed");
         return NULL; // abort from java
     });
-    process_flags->fbo_by_texture = false;
+    process_flags->fbo_by_texture = true;
     process_flags->reuse_fbo = true;
     process_flags->reuse_vao = true;
     process_flags->reuse_texture = true;

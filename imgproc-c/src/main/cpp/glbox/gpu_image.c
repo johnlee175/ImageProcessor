@@ -177,8 +177,8 @@ int glbox2_prepare_empty_texture(bool color, GImage *image, GLuint texture_unit,
         glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0,
                      format, GL_UNSIGNED_BYTE, NULL); CHECK_ERROR(code);
     } else {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL, image->width, image->height, 0,
-                     GL_DEPTH_STENCIL, GL_UNSIGNED_BYTE, NULL); CHECK_ERROR(code);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, image->width, image->height, 0,
+                     GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL); CHECK_ERROR(code);
     }
     glBindTexture(GL_TEXTURE_2D, 0); CHECK_ERROR(code);
     *out_texture_id = texture_id;
@@ -207,9 +207,8 @@ int glbox2_gen_fbo_bind_attachment(bool fbo_by_texture, GImage *image, GContext 
         }
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                GL_TEXTURE_2D, color_attachment, 0); CHECK_ERROR(code);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
                                GL_TEXTURE_2D, depth_stencil_attachment, 0); CHECK_ERROR(code);
-
     } else {
         GLenum format = image->channels == 3 ? GL_RGB : GL_RGBA;
 
@@ -253,11 +252,16 @@ int glbox2_gpu_render(GLuint program, GLuint texture_unit, GLuint texture_id, GL
 
     glViewport(0, 0, viewport_width, viewport_height); CHECK_ERROR(code);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); CHECK_ERROR(code);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); CHECK_ERROR(code);
+    glClearDepth(1.0f); CHECK_ERROR(code);
+    glClearStencil(0); CHECK_ERROR(code);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); CHECK_ERROR(code);
     glCullFace(GL_BACK); CHECK_ERROR(code);
     glFrontFace(GL_CCW); CHECK_ERROR(code);
     glEnable(GL_CULL_FACE); CHECK_ERROR(code);
     glEnable(GL_DEPTH_TEST); CHECK_ERROR(code);
+    glEnable(GL_STENCIL_TEST); CHECK_ERROR(code);
+
+    glActiveTexture(GL_TEXTURE0 + texture_unit); CHECK_ERROR(code);
 
     glBindVertexArray(vao); CHECK_ERROR(code);
     glBindTexture(GL_TEXTURE_2D, texture_id); CHECK_ERROR(code);
