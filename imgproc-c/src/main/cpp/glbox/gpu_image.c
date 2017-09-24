@@ -177,8 +177,8 @@ int glbox2_prepare_empty_texture(bool color, GImage *image, GLuint texture_unit,
         glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0,
                      format, GL_UNSIGNED_BYTE, NULL); CHECK_ERROR(code);
     } else {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, image->width, image->height, 0,
-                     GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, NULL); CHECK_ERROR(code);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL, image->width, image->height, 0,
+                     GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL); CHECK_ERROR(code);
     }
     glBindTexture(GL_TEXTURE_2D, 0); CHECK_ERROR(code);
     *out_texture_id = texture_id;
@@ -207,7 +207,7 @@ int glbox2_gen_fbo_bind_attachment(bool fbo_by_texture, GImage *image, GContext 
         }
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
                                GL_TEXTURE_2D, color_attachment, 0); CHECK_ERROR(code);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
                                GL_TEXTURE_2D, depth_stencil_attachment, 0); CHECK_ERROR(code);
     } else {
         GLenum format = image->channels == 3 ? GL_RGB : GL_RGBA;
