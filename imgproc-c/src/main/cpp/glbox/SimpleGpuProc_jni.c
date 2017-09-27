@@ -88,6 +88,21 @@ JNI_METHOD(jintArray, nativeImageProc)(JNIEnv *env, jobject thiz, jintArray argb
     jint *result_ptr = (*env)->GetIntArrayElements(env, result, NULL);
     jint *argb_ptr = (*env)->GetIntArrayElements(env, argb, NULL);
 
+    jclass map_clazz = (*env)->GetObjectClass(env, params_map);
+    jmethodID map_get_method = (*env)->GetMethodID(env, map_clazz, "get",
+                                                   "(Ljava/lang/Object;)Ljava/lang/Object;");
+    jstring key = (*env)->NewStringUTF(env, "fragment_shader_source");
+    jobject frag_shader = (*env)->CallObjectMethod(env, params_map, map_get_method, key);
+    jclass string_clazz = (*env)->FindClass(env, "java/lang/String");
+    const char *shader_source = NULL;
+    if (frag_shader != NULL && (*env)->IsInstanceOf(env, frag_shader, string_clazz)) {
+        jstring frag_shader_string = _static_cast(jstring) frag_shader;
+        shader_source = (*env)->GetStringUTFChars(env, frag_shader_string, NULL);
+    }
+    if (shader_source == NULL) {
+        shader_source = default_fragment_shader_source;
+    }
+
     DEFINE_HEAP_ARRAY_POINTER(uint8_t, origin_bytes, size * channels, {
         THROW_EXCEPTION("malloc origin_bytes[uint8_t] failed");
         return NULL; // abort from java
@@ -128,7 +143,7 @@ JNI_METHOD(jintArray, nativeImageProc)(JNIEnv *env, jobject thiz, jintArray argb
     process_flags->reuse_texture = true;
     process_flags->reuse_program = true;
 
-    if (glbox2_image_process(gk_jni_context, target, origin, default_fragment_shader_source,
+    if (glbox2_image_process(gk_jni_context, target, origin, shader_source,
                              process_flags) < 0) {
         THROW_EXCEPTION("call glbox2_image_process failed");
         return NULL; // abort from java
