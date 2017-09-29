@@ -20,7 +20,7 @@
  * @author John Kenrinus Lee
  * @version 2017-08-31
  */
-#include "base.h"
+#include "base/base.h"
 #include "SimpleCameraView.hpp"
 
 class SimpleCameraViewImpl {
@@ -230,7 +230,7 @@ bool SimpleCameraViewImpl::CreateEgl() {
         LOGI("EGL version %d-%d\n", major, minor);
     }
     EGLint num_config;
-    const EGLint configSpec[] = {
+    const EGLint config_spec[] = {
             EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER,
             EGL_RED_SIZE, 8,
             EGL_GREEN_SIZE, 8,
@@ -244,20 +244,20 @@ bool SimpleCameraViewImpl::CreateEgl() {
             EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
             EGL_NONE
     };
-    eglChooseConfig(this->egl_display, configSpec, &this->egl_config, 1, &num_config);
+    eglChooseConfig(this->egl_display, config_spec, &this->egl_config, 1, &num_config);
     if (num_config <= 0) {
         AssembleEglErrorString(eglGetError(), "eglChooseConfig failed:", buffer);
         LOGW("%s", buffer);
         return false;
     }
-    GLint contextSpec[] = {
+    const EGLint context_spec[] = {
             EGL_CONTEXT_CLIENT_VERSION, 2,
             EGL_NONE
     };
     if ((this->egl_context = eglCreateContext(this->egl_display,
                                               this->egl_config,
                                               EGL_NO_CONTEXT,
-                                              contextSpec)) == EGL_NO_CONTEXT) {
+                                              context_spec)) == EGL_NO_CONTEXT) {
         AssembleEglErrorString(eglGetError(), "eglCreateContext failed:", buffer);
         LOGW("%s", buffer);
         return false;

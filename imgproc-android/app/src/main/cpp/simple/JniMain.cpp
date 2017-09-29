@@ -20,7 +20,7 @@
  * @author John Kenrinus Lee
  * @version 2017-08-31
  */
-#include "base.h"
+#include "base/base.h"
 #include "../JniSimpleHelper.hpp"
 #include "SimpleCameraView.hpp"
 #include <android/native_window_jni.h>

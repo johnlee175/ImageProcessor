@@ -1,8 +1,6 @@
-#version 330 core
 precision mediump float;
 
-in vec2 vFragCoord;
-out vec4 fragColor;
+varying vec2 vFragCoord;
 uniform sampler2D uTexture;
 
 const vec2 singleStepOffset = vec2(1.0 / 600.0, 1.0 / 600.0);
@@ -21,7 +19,7 @@ float hardLight(float color) {
 }
 
 void main() {
-    vec3 centralColor = texture(uTexture, vFragCoord).rgb;
+    vec3 centralColor = texture2D(uTexture, vFragCoord).rgb;
     blurCoordinates[0] = vFragCoord.xy + singleStepOffset * vec2(0.0, -10.0);
     blurCoordinates[1] = vFragCoord.xy + singleStepOffset * vec2(0.0, 10.0);
     blurCoordinates[2] = vFragCoord.xy + singleStepOffset * vec2(-10.0, 0.0);
@@ -44,26 +42,26 @@ void main() {
     blurCoordinates[19] = vFragCoord.xy + singleStepOffset * vec2(4.0, 4.0);
 
     float sampleColor = centralColor.g * 20.0;
-    sampleColor += texture(uTexture, blurCoordinates[0]).g;
-    sampleColor += texture(uTexture, blurCoordinates[1]).g;
-    sampleColor += texture(uTexture, blurCoordinates[2]).g;
-    sampleColor += texture(uTexture, blurCoordinates[3]).g;
-    sampleColor += texture(uTexture, blurCoordinates[4]).g;
-    sampleColor += texture(uTexture, blurCoordinates[5]).g;
-    sampleColor += texture(uTexture, blurCoordinates[6]).g;
-    sampleColor += texture(uTexture, blurCoordinates[7]).g;
-    sampleColor += texture(uTexture, blurCoordinates[8]).g;
-    sampleColor += texture(uTexture, blurCoordinates[9]).g;
-    sampleColor += texture(uTexture, blurCoordinates[10]).g;
-    sampleColor += texture(uTexture, blurCoordinates[11]).g;
-    sampleColor += texture(uTexture, blurCoordinates[12]).g * 2.0;
-    sampleColor += texture(uTexture, blurCoordinates[13]).g * 2.0;
-    sampleColor += texture(uTexture, blurCoordinates[14]).g * 2.0;
-    sampleColor += texture(uTexture, blurCoordinates[15]).g * 2.0;
-    sampleColor += texture(uTexture, blurCoordinates[16]).g * 2.0;
-    sampleColor += texture(uTexture, blurCoordinates[17]).g * 2.0;
-    sampleColor += texture(uTexture, blurCoordinates[18]).g * 2.0;
-    sampleColor += texture(uTexture, blurCoordinates[19]).g * 2.0;
+    sampleColor += texture2D(uTexture, blurCoordinates[0]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[1]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[2]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[3]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[4]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[5]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[6]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[7]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[8]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[9]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[10]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[11]).g;
+    sampleColor += texture2D(uTexture, blurCoordinates[12]).g * 2.0;
+    sampleColor += texture2D(uTexture, blurCoordinates[13]).g * 2.0;
+    sampleColor += texture2D(uTexture, blurCoordinates[14]).g * 2.0;
+    sampleColor += texture2D(uTexture, blurCoordinates[15]).g * 2.0;
+    sampleColor += texture2D(uTexture, blurCoordinates[16]).g * 2.0;
+    sampleColor += texture2D(uTexture, blurCoordinates[17]).g * 2.0;
+    sampleColor += texture2D(uTexture, blurCoordinates[18]).g * 2.0;
+    sampleColor += texture2D(uTexture, blurCoordinates[19]).g * 2.0;
     sampleColor = sampleColor / 48.0;
 
     float highPass = centralColor.g - sampleColor + 0.5;
@@ -73,5 +71,5 @@ void main() {
     float luminance = dot(centralColor, W);
     float alpha = pow(luminance, params);
     vec3 smoothColor = centralColor + (centralColor - vec3(highPass)) * alpha * 0.1;
-    fragColor = vec4(mix(smoothColor.rgb, max(smoothColor, centralColor), alpha), 1.0);
+    gl_FragColor = vec4(mix(smoothColor.rgb, max(smoothColor, centralColor), alpha), 1.0);
 }

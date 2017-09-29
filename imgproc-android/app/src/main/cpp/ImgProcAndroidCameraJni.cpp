@@ -19,7 +19,7 @@
  * @author John Kenrinus Lee
  * @version 2017-08-18
  */
-#include "base.h"
+#include "base/base.h"
 #include "ImgProcAndroidCameraJni.hpp"
 #include "CCGLRenderCameraBox.hpp"
 #include <android/native_window_jni.h>

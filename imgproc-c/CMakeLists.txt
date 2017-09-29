@@ -141,9 +141,19 @@ message("\n
 set(LIB_DEPENDENCIES ${GLEW_LIBRARIES} ${GLFW_LIBRARIES} ${FREEGLUT_LIBRARIES})
 
 if(APPLE)
-    file(GLOB_RECURSE GLBOX_SOURCES src/main/cpp/glbox/macosx/*.c)
+    set(PLAT_SUBDIR macosx)
+elseif(UNIX)
+    set(PLAT_SUBDIR unix)
+else()
+    set(PLAT_SUBDIR windows)
 endif ()
+# ANDROID and IOS see another project
 
+file(GLOB_RECURSE GLBOX_SOURCES
+        src/main/cpp/glbox/${PLAT_SUBDIR}/*.c
+        src/main/cpp/glbox/${PLAT_SUBDIR}/*.h)
+
+# see imgproc-android/app/CMakeLists.txt
 add_library(glbox SHARED ${GLBOX_SOURCES}
         src/main/cpp/glbox/gpu_image.c
         src/main/cpp/glbox/SimpleGpuProc_jni.c)

@@ -21,8 +21,8 @@
                       android:largeScreens="true"
                       android:anyDensity="true" />
 
-    <application
-            android:allowBackup="true"
+    <application android:name="com.johnsoft.App"
+            android:largeHeap="true"
             android:icon="@mipmap/ic_launcher"
             android:label="@string/app_name"
             android:supportsRtl="true"
@@ -52,6 +52,8 @@
                 <!--<category android:name="android.intent.category.LAUNCHER"/>-->
             <!--</intent-filter>-->
         <!--</activity>-->
+
+        <activity android:name="com.johnsoft.imgproc.alg.ImageGpuProcessActivity"/>
     </application>
 
 </manifest>

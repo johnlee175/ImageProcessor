@@ -20,7 +20,7 @@
  * @author John Kenrinus Lee
  * @version 2017-08-18
  */
-#include "base.h"
+#include "base/base.h"
 #include "gl_render_camera_box.h"
 
 #ifndef GLRCBOX_CONSTANT_DEFINED
@@ -575,20 +575,22 @@ int glrcbox_create_egl(GLRenderCameraBox *glrcbox) {
     char buffer[256];
     if ((glrcbox->egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY))
         == EGL_NO_DISPLAY) {
-        glrcbox_egl_error_string(eglGetError(), "eglGetDisplay failed:", buffer);
+        glrcbox_egl_error_string(eglGetError(),
+                                 "eglGetDisplay failed:", buffer);
         LOGW("%s", buffer);
         return -1;
     }
     EGLint major, minor;
     if (!eglInitialize(glrcbox->egl_display, &major, &minor)) {
-        glrcbox_egl_error_string(eglGetError(), "eglInitialize failed:", buffer);
+        glrcbox_egl_error_string(eglGetError(),
+                                 "eglInitialize failed:", buffer);
         LOGW("%s", buffer);
         return -1;
     } else {
         LOGI("EGL version %d-%d\n", major, minor);
     }
     EGLint num_config;
-    const EGLint configSpec[] = {
+    const EGLint config_spec[] = {
             EGL_COLOR_BUFFER_TYPE, EGL_RGB_BUFFER,
             EGL_RED_SIZE, 8,
             EGL_GREEN_SIZE, 8,
@@ -602,7 +604,7 @@ int glrcbox_create_egl(GLRenderCameraBox *glrcbox) {
             EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
             EGL_NONE
     };
-    eglChooseConfig(glrcbox->egl_display, configSpec, &glrcbox->egl_config,
+    eglChooseConfig(glrcbox->egl_display, config_spec, &glrcbox->egl_config,
                     1, &num_config);
     if (num_config <= 0) {
         glrcbox_egl_error_string(eglGetError(),
@@ -610,14 +612,14 @@ int glrcbox_create_egl(GLRenderCameraBox *glrcbox) {
         LOGW("%s", buffer);
         return -1;
     }
-    GLint contextSpec[] = {
+    const EGLint context_spec[] = {
             EGL_CONTEXT_CLIENT_VERSION, 2,
             EGL_NONE
     };
     if ((glrcbox->egl_context = eglCreateContext(glrcbox->egl_display,
                                                  glrcbox->egl_config,
                                                  EGL_NO_CONTEXT,
-                                                 contextSpec)) == EGL_NO_CONTEXT) {
+                                                 context_spec)) == EGL_NO_CONTEXT) {
         glrcbox_egl_error_string(eglGetError(),
                                  "eglCreateContext failed:", buffer);
         LOGW("%s", buffer);

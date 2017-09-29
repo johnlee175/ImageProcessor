@@ -25,15 +25,29 @@
 
 #include "image_type.h"
 
-#ifdef is_macosx_os
+#if defined(is_macosx_os)
 #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #define GLEW_STATIC
 #include <GL/glew.h>
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl3ext.h>
+#elif defined(is_android_os)
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#include <GLES3/gl3.h>
+#include <GLES3/gl3ext.h>
 #endif /* is_macosx_os */
 
+#if defined(GL_ES_VERSION_2_0)
+static const char *default_fragment_shader_source = ""
+        "precision mediump float;\n"
+        "varying vec2 vFragCoord;\n"
+        "uniform sampler2D uTexture;\n"
+        "void main() {\n"
+        "    gl_FragColor = texture2D(uTexture, vFragCoord);\n"
+        "}";
+#else
 static const char *default_fragment_shader_source = ""
         "#version 330 core\n"
         "precision mediump float;\n"
@@ -43,6 +57,7 @@ static const char *default_fragment_shader_source = ""
         "void main() {\n"
         "    fragColor = texture(uTexture, vFragCoord);\n"
         "}";
+#endif
 
 typedef struct tagGCreateFlags {
 } GCreateFlags;

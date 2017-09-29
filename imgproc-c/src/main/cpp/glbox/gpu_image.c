@@ -38,8 +38,10 @@ struct tagGContext {
     GLuint texture_index;
 };
 
-#ifdef is_macosx_os
+#if defined(is_macosx_os)
 #include "glbox/macosx/gpu_image_internal.h"
+#elif defined(is_android_os)
+#include "glbox/android/gpu_image_internal.h"
 #endif
 
 static GLfloat pos_coord[] = {
@@ -49,10 +51,21 @@ static GLfloat pos_coord[] = {
          1.0f, -1.0f,           1.0f, 0.0f, /* Right Bottom */
         -1.0f, -1.0f,           0.0f, 0.0f, /* Left Bottom */
 };
-static GLuint element_index[] = { /* Note that we start from 0 with GL_CCW! */
+static GLushort element_index[] = { /* Note that we start from 0 with GL_CCW! */
         0, 3, 2, /* First Triangle */
         0, 2, 1, /* Second Triangle */
 };
+#if defined(GL_ES_VERSION_2_0)
+static const char *vertex_shader_source = ""
+        "precision mediump float;\n"
+        "attribute vec2 vertexPosition;\n"
+        "attribute vec2 textureCoordinate;\n"
+        "varying vec2 vFragCoord;\n"
+        "void main() {\n"
+        "    vFragCoord = textureCoordinate;\n"
+        "    gl_Position = vec4(vertexPosition, 0.0, 1.0);\n"
+        "}";
+#else
 static const char *vertex_shader_source = ""
         "#version 330 core\n"
         "precision mediump float;\n"
@@ -63,6 +76,7 @@ static const char *vertex_shader_source = ""
         "    gl_Position = vec4(vertexPosition, 0.0, 1.0);\n"
         "    vFragCoord = textureCoordinate;\n"
         "}";
+#endif
 
 #define CHECK_ERROR(code_enum) \
 if ((code_enum = glGetError()) != GL_NO_ERROR) { \
@@ -83,7 +97,7 @@ int glbox2_compile_link_shader(const char *vs_source, const char *fs_source, GLu
     if (!success) {
         GLchar info_log[512];
         glGetShaderInfoLog(vs, sizeof(info_log), NULL, info_log);
-        base_error_log("ERROR::SHADER::VERTEX::COMPILATION_FAILED -> %s\n", info_log);
+        base_error_log("ERROR::SHADER::VERTEX::COMPILATION_FAILED (Vertex) -> %s\n", info_log);
         return -1;
     }
 
@@ -94,7 +108,7 @@ int glbox2_compile_link_shader(const char *vs_source, const char *fs_source, GLu
     if (!success) {
         GLchar info_log[512];
         glGetShaderInfoLog(fs, sizeof(info_log), NULL, info_log);
-        base_error_log("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED -> %s\n", info_log);
+        base_error_log("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED (Fragment) -> %s\n", info_log);
         return -1;
     }
 
@@ -140,7 +154,7 @@ int glbox2_gen_vao_bind_attrib(GLuint program, GLuint *out_vao, GLuint *out_vbo,
 
     loc_attr = (GLuint) glGetAttribLocation(program, "textureCoordinate"); CHECK_ERROR(code);
     glVertexAttribPointer(loc_attr, 2, GL_FLOAT, GL_FALSE,
-                          4 * sizeof(GLfloat), (GLvoid*) (1 * 2 * sizeof(GLfloat))); CHECK_ERROR(code);
+                          4 * sizeof(GLfloat), _static_cast(GLvoid*) (1 * 2 * sizeof(GLfloat))); CHECK_ERROR(code);
     glEnableVertexAttribArray(loc_attr); CHECK_ERROR(code);
 
     glBindVertexArray(0); CHECK_ERROR(code);
@@ -272,7 +286,7 @@ int glbox2_gpu_render(GLuint program, GLuint texture_unit, GLuint texture_id, GL
 
     glViewport(0, 0, viewport_width, viewport_height); CHECK_ERROR(code);
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f); CHECK_ERROR(code);
-    glClearDepth(1.0f); CHECK_ERROR(code);
+    glClearDepthf(1.0f); CHECK_ERROR(code);
     glClearStencil(0); CHECK_ERROR(code);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT); CHECK_ERROR(code);
     glCullFace(GL_BACK); CHECK_ERROR(code);
@@ -285,7 +299,7 @@ int glbox2_gpu_render(GLuint program, GLuint texture_unit, GLuint texture_id, GL
 
     glBindVertexArray(vao); CHECK_ERROR(code);
     glBindTexture(GL_TEXTURE_2D, texture_id); CHECK_ERROR(code);
-    glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_INT, 0); CHECK_ERROR(code);
+    glDrawElements(GL_TRIANGLES, 2 * 3, GL_UNSIGNED_SHORT, 0); CHECK_ERROR(code);
     glBindTexture(GL_TEXTURE_2D, 0); CHECK_ERROR(code);
     glBindVertexArray(0); CHECK_ERROR(code);
 

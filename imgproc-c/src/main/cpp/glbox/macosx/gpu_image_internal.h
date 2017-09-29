@@ -72,6 +72,11 @@ static int prepare_off_screen_context(GContext *g_context, GCreateFlags *flag) {
         base_error_log("call glewInit failed\n");
         return -1;
     }
+    const GLubyte *version = glGetString(GL_VERSION);
+    const GLubyte *vendor = glGetString(GL_VENDOR);
+    const GLubyte *renderer = glGetString(GL_RENDERER);
+    base_info_log("GPU Image Internal: version: '%s'; vendor: '%s'; renderer: '%s'\n",
+                  version, vendor, renderer);
     g_context->native_context->context_obj = context;
     return 0;
 }
@@ -94,6 +99,7 @@ static int mark_current_off_screen_context(GContext *context) {
 static void release_off_screen_context(GContext *context) {
     if (context && context->native_context->context_obj) {
         CGLDestroyContext(context->native_context->context_obj);
+        CGLSetCurrentContext(NULL);
+        context->native_context->context_obj = NULL;
     }
-    CGLSetCurrentContext(NULL);
 }

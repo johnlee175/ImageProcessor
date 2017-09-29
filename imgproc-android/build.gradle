@@ -3,13 +3,14 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.1' // with gradle-3.4
+        classpath 'com.android.tools.build:gradle:2.3.3' // with gradle-3.4
     }
 }
 
 allprojects {
     repositories {
         jcenter()
+        maven { url "https://jitpack.io" }
     }
 }
 

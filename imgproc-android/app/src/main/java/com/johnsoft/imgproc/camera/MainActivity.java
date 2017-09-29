@@ -17,6 +17,7 @@
 package com.johnsoft.imgproc.camera;
 
 import com.johnsoft.imgproc.R;
+import com.johnsoft.imgproc.alg.ImageGpuProcessActivity;
 import com.johnsoft.imgproc.camera.simple.SimpleCameraActivity;
 
 import android.content.Intent;
@@ -51,5 +52,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void startSimpleCamera(View view) {
         startActivity(new Intent(this, SimpleCameraActivity.class));
+    }
+
+    public void startImageGpuProcess(View view) {
+        startActivity(new Intent(this, ImageGpuProcessActivity.class));
     }
 }

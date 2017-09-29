@@ -19,7 +19,7 @@
  * @author John Kenrinus Lee
  * @version 2017-08-18
  */
-#include "base.h"
+#include "base/base.h"
 #include "imgproc_android_camera_jni.h"
 #include "gl_render_camera_box.h"
 #include <android/native_window_jni.h>

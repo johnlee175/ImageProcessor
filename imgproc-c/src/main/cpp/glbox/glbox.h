@@ -61,22 +61,6 @@
 #include <GL3/gl3ext.h>
 #endif
 
-#if defined(__unix__) || defined(unix)
-#define is_unix_os
-#endif
-
-#ifdef __GNUC__
-#define GCC_COMPILE
-#endif
-
-#ifdef __clang__
-#define CLANG_COMPILE
-#endif
-
-#ifdef _MSC_VER
-#define VS_COMPILE
-#endif
-
 
 #include <GL/freeglut.h>
 #include <GLFW/glfw3.h>
