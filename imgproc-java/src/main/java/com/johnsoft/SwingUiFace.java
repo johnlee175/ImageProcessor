@@ -176,7 +176,13 @@ public class SwingUiFace implements UiFace {
         } else if ("Filter-Simple-Histogram-Equalization-Color".equals(command)) {
             return new SimpleHistEqualizeAction(BaseImageProc.TYPE_ARGB_COLOR);
         } else if ("Filter-GPU-normal".equals(command)) {
-            return new GpuImageProcAction();
+            return new GpuImageProcAction("normal");
+        } else if ("Filter-GPU-negative".equals(command)) {
+            return new GpuImageProcAction("negative");
+        } else if ("Filter-GPU-sketch".equals(command)) {
+            return new GpuImageProcAction("sketch");
+        } else if ("Filter-GPU-white_skin".equals(command)) {
+            return new GpuImageProcAction("white_skin");
         } else if ("Chart-Histogram".equals(command)) {
             return new ChartHistogramAction();
         }

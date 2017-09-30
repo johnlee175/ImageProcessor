@@ -26,7 +26,7 @@ import java.util.Map;
 
 import com.github.chrisbanes.photoview.PhotoView;
 import com.johnsoft.App;
-import com.johnsoft.alg.SimpleGpuProc;
+import com.johnsoft.alg.SimpleGpuProcProxy;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -148,9 +148,9 @@ public class GpuImageView extends PhotoView
     public void onCreateContextMenu(ContextMenu menu, View v,
                                     ContextMenu.ContextMenuInfo menuInfo) {
         menu.add(GROUP_FILTER, 0, 0, "Origin").setOnMenuItemClickListener(this);
-        menu.add(GROUP_FILTER, 1, 1, "Hello1").setOnMenuItemClickListener(this);
-        menu.add(GROUP_FILTER, 2, 2, "Hello2").setOnMenuItemClickListener(this);
-        menu.add(GROUP_FILTER, 3, 3, "Hello3").setOnMenuItemClickListener(this);
+        menu.add(GROUP_FILTER, 1, 1, "Negative").setOnMenuItemClickListener(this);
+        menu.add(GROUP_FILTER, 2, 2, "Sketch").setOnMenuItemClickListener(this);
+        menu.add(GROUP_FILTER, 3, 3, "WhiteSkin").setOnMenuItemClickListener(this);
     }
 
     @Override
@@ -172,26 +172,32 @@ public class GpuImageView extends PhotoView
             @Override
             public void run() {
                 final Bitmap resultBitmap = processImage();
-                post(new Runnable() {
-                    @Override
-                    public void run() {
-                        final Bitmap bitmap = getOriginBitmap();
-                        setImageBitmap(resultBitmap);
-                        bitmap.recycle();
-                    }
-                });
+                if (resultBitmap != null) {
+                    post(new Runnable() {
+                        @Override
+                        public void run() {
+                            final Bitmap bitmap = getOriginBitmap();
+                            setImageBitmap(resultBitmap);
+                            bitmap.recycle();
+                        }
+                    });
+                }
             }
         });
         return true;
     }
 
     private Bitmap processImage() {
+        final SimpleGpuProcProxy proc = ((ImageGpuProcessActivity) getContext()).getProc();
         final Bitmap bitmap = getOriginBitmap();
         final int width = bitmap.getWidth();
         final int height = bitmap.getHeight();
         final int[] data = new int[width * height * 4];
         bitmap.getPixels(data, 0, width, 0, 0, width, height);
-        final int [] result = SimpleGpuProc.getDefault().imageProc(data, width, height, 0, map);
+        final int [] result = proc.imageProc(data, width, height, 0, map);
+        if (result == null) {
+            return null;
+        }
         final Bitmap resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         resultBitmap.setPixels(result, 0, width, 0, 0, width, height);
         return resultBitmap;

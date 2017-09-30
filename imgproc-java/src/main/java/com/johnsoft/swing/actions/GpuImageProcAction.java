@@ -26,7 +26,7 @@ import java.util.Map;
 import javax.swing.JFrame;
 
 import com.johnsoft.UiFace;
-import com.johnsoft.alg.SimpleGpuProc;
+import com.johnsoft.alg.SimpleGpuProcProxy;
 import com.johnsoft.swing.SwingImageView;
 
 /**
@@ -65,7 +65,23 @@ public class GpuImageProcAction implements UiFace.Action {
         }
     }
 
+    private static final SimpleGpuProcProxy procProxy = new SimpleGpuProcProxy().create();
+
     private final Map<String, Object> map = new HashMap<>();
+
+    public GpuImageProcAction(String type) {
+        if ("normal".equals(type)) {
+            map.put("fragment_shader_source", null);
+        } else if ("negative".equals(type)) {
+            map.put("fragment_shader_source", fsHello1);
+        } else if ("sketch".equals(type)) {
+            map.put("fragment_shader_source", fsHello2);
+        } else if ("white_skin".equals(type)) {
+            map.put("fragment_shader_source", fsHello3);
+        } else {
+            throw new IllegalArgumentException("Unknown type");
+        }
+    }
 
     @Override
     public void action(UiFace uiFace, UiFace.Control control) {
@@ -86,7 +102,6 @@ public class GpuImageProcAction implements UiFace.Action {
     }
 
     protected int[] subAction(JFrame frame, int[] data, int w, int h) {
-        map.put("fragment_shader_source", fsHello1);
-        return SimpleGpuProc.getDefault().imageProc(data, w, h, 0, map);
+        return procProxy.imageProc(data, w, h, 0, map);
     }
 }

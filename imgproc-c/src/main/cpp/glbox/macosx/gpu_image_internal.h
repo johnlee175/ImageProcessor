@@ -15,6 +15,7 @@
  * limitations under the license.
  */
 /**
+ * NOTICE: OpenGL need run on single thread!
  * @author John Kenrinus Lee
  * @version 2017-09-25
  */

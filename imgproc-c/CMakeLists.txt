@@ -161,15 +161,15 @@ add_library(glbox SHARED ${GLBOX_SOURCES}
 if(APPLE)
     message("APPLE")
     set_target_properties(glbox PROPERTIES
-            PREFIX "lib" OUTPUT_NAME "glbox-$ENV{APP_VERSION}" SUFFIX ".jnilib")
+            PREFIX "lib" OUTPUT_NAME "glbox" SUFFIX ".jnilib")
 elseif(UNIX)
     message("UNIX")
     set_target_properties(glbox PROPERTIES
-            PREFIX "lib" OUTPUT_NAME "glbox-$ENV{APP_VERSION}" SUFFIX ".so")
+            PREFIX "lib" OUTPUT_NAME "glbox" SUFFIX ".so")
 else()
     message("WINDOWS")
     set_target_properties(glbox PROPERTIES
-            PREFIX "" OUTPUT_NAME "glbox-$ENV{APP_VERSION}" SUFFIX ".dll")
+            PREFIX "" OUTPUT_NAME "glbox" SUFFIX ".dll")
     set(CMAKE_GNUtoMS ON)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static-libgcc")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")

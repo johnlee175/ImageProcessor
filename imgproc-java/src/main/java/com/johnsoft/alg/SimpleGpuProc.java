@@ -19,22 +19,13 @@ package com.johnsoft.alg;
 import java.util.Map;
 
 /**
+ * Simple Gpu Process
  * @author John Kenrinus Lee
  * @version 2017-09-18
  */
 public class SimpleGpuProc {
     static {
-        System.loadLibrary("glbox-1.0.0");
-    }
-
-    private static SimpleGpuProc defaultInstance = new SimpleGpuProc();
-
-    public static SimpleGpuProc getDefault() {
-        return defaultInstance;
-    }
-
-    public static void setDefault(SimpleGpuProc simpleGpuProc) {
-        defaultInstance = simpleGpuProc;
+        System.loadLibrary("glbox");
     }
 
     private long nativeContextPointer;

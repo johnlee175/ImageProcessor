@@ -68,6 +68,12 @@ public class MainLauncher {
                 .addSubMenu("Filter", "GPU")
                 .addMenuItem("GPU", "normal",
                         face.getAction("Filter-GPU-normal"))
+                .addMenuItem("GPU", "negative",
+                        face.getAction("Filter-GPU-negative"))
+                .addMenuItem("GPU", "sketch",
+                        face.getAction("Filter-GPU-sketch"))
+                .addMenuItem("GPU", "white skin",
+                        face.getAction("Filter-GPU-white_skin"))
                 .addMenuItem("Chart", "Histogram",
                         face.getAction("Chart-Histogram"))
                 .assemble();

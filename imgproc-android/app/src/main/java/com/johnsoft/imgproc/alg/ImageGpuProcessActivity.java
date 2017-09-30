@@ -18,6 +18,8 @@ package com.johnsoft.imgproc.alg;
 
 import java.util.ArrayList;
 
+import com.johnsoft.alg.SimpleGpuProcProxy;
+
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
@@ -53,6 +55,8 @@ public class ImageGpuProcessActivity extends AppCompatActivity {
     private GpuViewPager viewPager;
     private GpuPagerAdapter pagerAdapter;
 
+    private final SimpleGpuProcProxy proc = new SimpleGpuProcProxy();
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +89,8 @@ public class ImageGpuProcessActivity extends AppCompatActivity {
             return;
         }
 
+        proc.create();
+
         boolean originLoaded = false;
         final Intent intent = getIntent();
         if (intent != null) {
@@ -103,6 +109,16 @@ public class ImageGpuProcessActivity extends AppCompatActivity {
         if (!originLoaded) {
             pagerAdapter.addItemObject(new Pair<>("file:///android_asset/image_test.jpg", TYPE_DEFAULT));
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        proc.destroy();
+    }
+
+    public SimpleGpuProcProxy getProc() {
+        return proc;
     }
 
     private static class GpuViewPager extends ViewPager {

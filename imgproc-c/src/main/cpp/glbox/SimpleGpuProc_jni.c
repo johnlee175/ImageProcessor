@@ -75,6 +75,7 @@ JNI_METHOD(void, nativeCreate)(JNIEnv *env, jobject thiz) {
 JNI_METHOD(void, nativeDestroy)(JNIEnv *env, jobject thiz) {
     if (gk_jni_context != NULL) {
         glbox2_destroy_context(gk_jni_context, NULL, NULL, 0);
+        gk_jni_context = NULL;
     }
 }
 

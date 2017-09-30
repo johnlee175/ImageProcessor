@@ -28,16 +28,6 @@ public class SimpleGpuProc {
         System.loadLibrary("glbox");
     }
 
-    private static SimpleGpuProc defaultInstance = new SimpleGpuProc();
-
-    public static SimpleGpuProc getDefault() {
-        return defaultInstance;
-    }
-
-    public static void setDefault(SimpleGpuProc simpleGpuProc) {
-        defaultInstance = simpleGpuProc;
-    }
-
     private long nativeContextPointer;
 
     public SimpleGpuProc() {
