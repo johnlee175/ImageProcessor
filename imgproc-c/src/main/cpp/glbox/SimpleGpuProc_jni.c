@@ -79,6 +79,8 @@ JNI_METHOD(void, nativeDestroy)(JNIEnv *env, jobject thiz) {
     }
 }
 
+/* TODO reuse GProcessFlags object */
+/* TODO memory may increasing while each call this method via OpenGL or OpenGLES */
 JNI_METHOD(jintArray, nativeImageProc)(JNIEnv *env, jobject thiz, jintArray argb, jint w, jint h,
                                  jint type, jobject /* Map<String, Object> */ params_map) {
     const uint32_t channels = 4;
@@ -159,6 +161,7 @@ JNI_METHOD(jintArray, nativeImageProc)(JNIEnv *env, jobject thiz, jintArray argb
     FREE_POINTER(origin);
     FREE_POINTER(target_bytes);
     FREE_POINTER(target);
+    FREE_POINTER(process_flags->private_data);
     FREE_POINTER(process_flags);
 
     return result;

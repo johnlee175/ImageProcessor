@@ -32,6 +32,11 @@
 #include <OpenGL/OpenGL.h>
 #include <OpenGL/gl3.h>
 #include <OpenGL/gl3ext.h>
+#elif defined(is_ios_os)
+#include <OpenGLES/EAGL.h>
+#include <OpenGLES/EAGLDrawable.h>
+#include <OpenGLES/ES3/gl.h>
+#include <OpenGLES/ES3/glext.h>
 #elif defined(is_android_os)
 #include <EGL/egl.h>
 #include <EGL/eglext.h>

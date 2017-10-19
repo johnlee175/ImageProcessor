@@ -206,7 +206,7 @@ static int mark_current_off_screen_context(GContext *context) {
         }
     } else {
         base_error_log("mark_current_off_screen_context: "
-                               "context == NULL || context->context_obj == NULL\n");
+                               "egl_context == NULL || egl_context == EGL_NO_CONTEXT\n");
         return -1;
     }
 }

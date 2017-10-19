@@ -40,9 +40,11 @@ struct tagGContext {
 
 #if defined(is_macosx_os)
 #include "glbox/macosx/gpu_image_internal.h"
+#elif defined(is_ios_os)
+#include "glbox/ios/gpu_image_internal.h"
 #elif defined(is_android_os)
 #include "glbox/android/gpu_image_internal.h"
-#endif
+#endif /* is_macosx_os */
 
 static GLfloat pos_coord[] = {
         /* Vertex Positions */  /* Texture Coordinates */
@@ -207,12 +209,23 @@ int glbox2_prepare_empty_texture(bool color, GImage *image, GLuint texture_unit,
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); CHECK_ERROR(code);
     /* glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE); // Removed from GL 3.1 and above */
     if (color) {
+#if defined(is_ios_os)
+        GLenum internal_format = image->channels == 3 ? GL_RGB8 : GL_RGBA8;
+#else
+        GLenum internal_format = image->channels == 3 ? GL_RGB : GL_RGBA;
+#endif
         GLenum format = image->channels == 3 ? GL_RGB : GL_RGBA;
-        glTexImage2D(GL_TEXTURE_2D, 0, format, image->width, image->height, 0,
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image->width, image->height, 0,
                      format, GL_UNSIGNED_BYTE, NULL); CHECK_ERROR(code);
     } else {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_STENCIL, image->width, image->height, 0,
-                     GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL); CHECK_ERROR(code);
+#if defined(is_ios_os)
+        GLenum internal_format = GL_DEPTH24_STENCIL8;
+#else
+        GLenum internal_format = GL_DEPTH_STENCIL;
+#endif
+        GLenum format = GL_DEPTH_STENCIL;
+        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, image->width, image->height, 0,
+                     format, GL_UNSIGNED_INT_24_8, NULL); CHECK_ERROR(code);
     }
     glBindTexture(GL_TEXTURE_2D, 0); CHECK_ERROR(code);
     *out_texture_id = texture_id;
@@ -244,16 +257,21 @@ int glbox2_gen_fbo_bind_attachment(bool fbo_by_texture, GImage *image, GContext 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
                                GL_TEXTURE_2D, depth_stencil_attachment, 0); CHECK_ERROR(code);
     } else {
-        GLenum format = image->channels == 3 ? GL_RGB : GL_RGBA;
-
+#if defined(is_ios_os)
+        GLenum color_format = image->channels == 3 ? GL_RGB8 : GL_RGBA8;
+        GLenum depth_stencil_format = GL_DEPTH24_STENCIL8;
+#else
+        GLenum color_format = image->channels == 3 ? GL_RGB : GL_RGBA;
+        GLenum depth_stencil_format = GL_DEPTH_STENCIL;
+#endif
         glGenRenderbuffers(1, &color_attachment); CHECK_ERROR(code);
         glBindRenderbuffer(GL_RENDERBUFFER, color_attachment); CHECK_ERROR(code);
-        glRenderbufferStorage(GL_RENDERBUFFER, format, image->width, image->height); CHECK_ERROR(code);
+        glRenderbufferStorage(GL_RENDERBUFFER, color_format, image->width, image->height); CHECK_ERROR(code);
         glBindRenderbuffer(GL_RENDERBUFFER, 0); CHECK_ERROR(code);
 
         glGenRenderbuffers(1, &depth_stencil_attachment); CHECK_ERROR(code);
         glBindRenderbuffer(GL_RENDERBUFFER, depth_stencil_attachment); CHECK_ERROR(code);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_STENCIL, image->width, image->height); CHECK_ERROR(code);
+        glRenderbufferStorage(GL_RENDERBUFFER, depth_stencil_format, image->width, image->height); CHECK_ERROR(code);
         glBindRenderbuffer(GL_RENDERBUFFER, 0); CHECK_ERROR(code);
 
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
