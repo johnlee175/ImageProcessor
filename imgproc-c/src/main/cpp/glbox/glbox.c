@@ -15,6 +15,8 @@
  * limitations under the license.
  */
 /**
+ * glbox utilities of first version
+ * @Deprecated
  * @author John Kenrinus Lee
  * @version 2017-09-25
  */

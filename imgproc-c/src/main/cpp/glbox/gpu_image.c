@@ -20,6 +20,12 @@
  */
 #include "gpu_image.h"
 
+/*
+ * TODO * A exception happened when call image process many times:
+ * TODO [following up] glGetError return code 1280, line at 175;
+ * TODO [following up] call glbox2_prepare_texture failed;
+ */
+
 struct tagGPrivateProcessFlags {
     GLuint program;
     GLuint vao;
