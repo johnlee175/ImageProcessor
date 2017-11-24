@@ -42,6 +42,13 @@
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
 #include <GLES3/gl3ext.h>
+#elif defined(is_linux_os)
+#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
+#define GLEW_STATIC
+#include <glew.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
+#include <GL/glx.h>
 #endif /* is_macosx_os */
 
 #if defined(GL_ES_VERSION_2_0)
@@ -78,14 +85,14 @@ typedef struct tagGProcessFlags {
     GPrivateProcessFlags *private_data;
 } GProcessFlags;
 
-typedef struct tagGContext GContext;
+typedef struct tagGContext GlboxContext;
 
-EXPORT GContext *glbox2_create_context(PARAM_IN GCreateFlags *flag);
+EXPORT GlboxContext *glbox2_create_context(PARAM_IN GCreateFlags *flag);
 
-EXPORT int glbox2_image_process(PARAM_IN GContext *context, PARAM_IN GImage *target, PARAM_IN GImage *origin,
+EXPORT int glbox2_image_process(PARAM_IN GlboxContext *context, PARAM_IN GImage *target, PARAM_IN GImage *origin,
                                 PARAM_IN const char *fragment_shader_source, PARAM_IN GProcessFlags *flag);
 
-EXPORT void glbox2_destroy_context(PARAM_IN GContext *context, PARAM_IN GCreateFlags *flag,
+EXPORT void glbox2_destroy_context(PARAM_IN GlboxContext *context, PARAM_IN GCreateFlags *flag,
                                    PARAM_IN GProcessFlags **process_flags_array, uint32_t process_flags_size);
 
 #endif /* PROJECT_GPU_IMAGE_H */

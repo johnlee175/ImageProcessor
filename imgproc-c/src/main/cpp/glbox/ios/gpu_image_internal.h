@@ -26,9 +26,9 @@ struct tagInternalGContext {
     __unsafe_unretained EAGLContext *eagl_context;
 };
 
-static int prepare_off_screen_context(GContext *g_context, GCreateFlags *flag) {
+static int prepare_off_screen_context(GlboxContext *g_context, GCreateFlags *flag) {
     if (!g_context || !g_context->native_context) {
-        base_error_log("pass a GContext pointer to NULL or its native_context is NULL\n");
+        base_error_log("pass a GlboxContext pointer to NULL or its native_context is NULL\n");
         return -1;
     }
     
@@ -53,9 +53,9 @@ static int prepare_off_screen_context(GContext *g_context, GCreateFlags *flag) {
     return 0;
 }
 
-static int mark_current_off_screen_context(GContext *context) {
+static int mark_current_off_screen_context(GlboxContext *context) {
     if (!context || !context->native_context) {
-        base_error_log("pass a GContext pointer to NULL or its native_context is NULL\n");
+        base_error_log("pass a GlboxContext pointer to NULL or its native_context is NULL\n");
         return -1;
     }
     if (context->native_context->eagl_context != nil) {
@@ -67,14 +67,14 @@ static int mark_current_off_screen_context(GContext *context) {
         }
     } else {
         base_error_log("mark_current_off_screen_context: "
-                               "context == NULL || context->context_obj == NULL\n");
+                               "context == NULL || context->eagl_context == NULL\n");
         return -1;
     }
 }
 
-static void release_off_screen_context(GContext *context) {
+static void release_off_screen_context(GlboxContext *context) {
     if (!context || !context->native_context) {
-        base_error_log("pass a GContext pointer to NULL or its native_context is NULL\n");
+        base_error_log("pass a GlboxContext pointer to NULL or its native_context is NULL\n");
     }
     context->native_context->eagl_context = nil;
     if (![EAGLContext setCurrentContext:nil]) {

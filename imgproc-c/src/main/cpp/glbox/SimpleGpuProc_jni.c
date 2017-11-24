@@ -64,7 +64,7 @@ static void copy_rgba_bytes_to_argb_ints(uint8_t *from, int32_t *to, size_t from
     }
 }
 
-GContext *gk_jni_context;
+GlboxContext *gk_jni_context;
 
 JNI_METHOD(void, nativeCreate)(JNIEnv *env, jobject thiz) {
     if (gk_jni_context == NULL) {

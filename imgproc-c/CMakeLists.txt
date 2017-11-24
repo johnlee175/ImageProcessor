@@ -29,15 +29,17 @@ message("CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID}")
 message("CMAKE_CXX_COMPILER_VERSION=${CMAKE_CXX_COMPILER_VERSION}")
 
 set(CMAKE_BUILD_TYPE $ENV{BUILD_TYPE})
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -std=c11 -fvisibility=hidden")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -std=c++11 -fvisibility=hidden")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter
+        -Wno-unused-variable -std=c11 -fvisibility=hidden")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter
+        -Wno-unused-variable -std=c++11 -fvisibility=hidden")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 
 include_directories(src/main/cpp)
 
-
 # Make sure exists JAVA_HOME global environment variable, locate at valid JDK directory, and $JAVA_HOME/bin in $PATH
+# If you use Clion, maybe need add JAVA_HOME by(linux): File->Settings->Build,Execution,Deployment->CMake->Environment
 find_package(JNI REQUIRED)
 include_directories(${JAVA_INCLUDE_PATH})
 include_directories(${JAVA_INCLUDE_PATH2})
@@ -143,7 +145,7 @@ set(LIB_DEPENDENCIES ${GLEW_LIBRARIES} ${GLFW_LIBRARIES} ${FREEGLUT_LIBRARIES})
 if(APPLE)
     set(PLAT_SUBDIR macosx)
 elseif(UNIX)
-    set(PLAT_SUBDIR unix)
+    set(PLAT_SUBDIR linux)
 else()
     set(PLAT_SUBDIR windows)
 endif ()

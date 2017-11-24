@@ -50,6 +50,8 @@ struct tagGContext {
 #include "glbox/ios/gpu_image_internal.h"
 #elif defined(is_android_os)
 #include "glbox/android/gpu_image_internal.h"
+#elif defined(is_linux_os)
+#include "glbox/linux/gpu_image_internal.h"
 #endif /* is_macosx_os */
 
 static GLfloat pos_coord[] = {
@@ -238,7 +240,7 @@ int glbox2_prepare_empty_texture(bool color, GImage *image, GLuint texture_unit,
     return 0;
 }
 
-int glbox2_gen_fbo_bind_attachment(bool fbo_by_texture, GImage *image, GContext *context,
+int glbox2_gen_fbo_bind_attachment(bool fbo_by_texture, GImage *image, GlboxContext *context,
                                    GLuint *out_fbo, GLuint *out_color, GLuint *out_depth_stencil) {
     GLuint fbo;
     GLuint color_attachment, depth_stencil_attachment;
@@ -340,7 +342,7 @@ int glbox2_read_pixels(GImage *image) {
     return 0;
 }
 
-int glbox2_do_image_process(GContext *context, GImage *target, GImage *origin,
+int glbox2_do_image_process(GlboxContext *context, GImage *target, GImage *origin,
                             const char *fragment_shader_source, GProcessFlags *flag) {
     if (mark_current_off_screen_context(context) < 0) {
         base_error_log("call mark_current_off_screen_context failed\n");
@@ -439,7 +441,7 @@ int glbox2_do_image_process(GContext *context, GImage *target, GImage *origin,
     return 0;
 }
 
-EXPORT int glbox2_image_process(PARAM_IN GContext *context, PARAM_IN GImage *target, PARAM_IN GImage *origin,
+EXPORT int glbox2_image_process(PARAM_IN GlboxContext *context, PARAM_IN GImage *target, PARAM_IN GImage *origin,
                                 PARAM_IN const char *fragment_shader_source, PARAM_IN GProcessFlags *flag) {
     if (!target) {
         base_error_log("target is NULL\n");
@@ -484,9 +486,9 @@ EXPORT int glbox2_image_process(PARAM_IN GContext *context, PARAM_IN GImage *tar
     return glbox2_do_image_process(context, target, origin, fragment_shader_source, flag);
 }
 
-EXPORT GContext *glbox2_create_context(PARAM_IN GCreateFlags *flag) {
-    DEFINE_HEAP_TYPE_POINTER(GContext, context, {
-        base_error_log("malloc GContext failed\n");
+EXPORT GlboxContext *glbox2_create_context(PARAM_IN GCreateFlags *flag) {
+    DEFINE_HEAP_TYPE_POINTER(GlboxContext, context, {
+        base_error_log("malloc GlboxContext failed\n");
         return NULL;
     });
 
@@ -504,7 +506,7 @@ EXPORT GContext *glbox2_create_context(PARAM_IN GCreateFlags *flag) {
     return context;
 }
 
-EXPORT void glbox2_destroy_context(PARAM_IN GContext *context, PARAM_IN GCreateFlags *flag,
+EXPORT void glbox2_destroy_context(PARAM_IN GlboxContext *context, PARAM_IN GCreateFlags *flag,
                                    PARAM_IN GProcessFlags **process_flags_array, uint32_t process_flags_size) {
     if (process_flags_array && process_flags_size > 0) {
         GProcessFlags *process_flags;

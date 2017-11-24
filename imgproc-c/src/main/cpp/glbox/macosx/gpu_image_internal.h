@@ -26,9 +26,9 @@ struct tagInternalGContext {
     CGLContextObj context_obj;
 };
 
-static int prepare_off_screen_context(GContext *g_context, GCreateFlags *flag) {
+static int prepare_off_screen_context(GlboxContext *g_context, GCreateFlags *flag) {
     if (!g_context || !g_context->native_context) {
-        base_error_log("pass a GContext pointer to NULL or its native_context is NULL\n");
+        base_error_log("pass a GlboxContext pointer to NULL or its native_context is NULL\n");
         return -1;
     }
     CGLPixelFormatAttribute attributes[] = {
@@ -82,7 +82,7 @@ static int prepare_off_screen_context(GContext *g_context, GCreateFlags *flag) {
     return 0;
 }
 
-static int mark_current_off_screen_context(GContext *context) {
+static int mark_current_off_screen_context(GlboxContext *context) {
     if (context && context->native_context->context_obj) {
         if (CGLSetCurrentContext(context->native_context->context_obj) != kCGLNoError) {
             base_error_log("call CGLSetCurrentContext failed\n");
@@ -97,7 +97,7 @@ static int mark_current_off_screen_context(GContext *context) {
     }
 }
 
-static void release_off_screen_context(GContext *context) {
+static void release_off_screen_context(GlboxContext *context) {
     if (context && context->native_context->context_obj) {
         CGLDestroyContext(context->native_context->context_obj);
         CGLSetCurrentContext(NULL);
