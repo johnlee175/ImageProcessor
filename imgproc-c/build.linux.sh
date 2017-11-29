@@ -50,10 +50,10 @@ else
 fi
 
 BuildType="${BuildType:-debug}"
+export BUILD_TYPE="$(tr '[:lower:]' '[:upper:]' <<< ${BuildType:0:1})${BuildType:1}"
 #export CC=/path/to/your/c/compiler
 #export CXX=/path/to/your/c++/compiler
-export PROJECT='imgproc'
-export BUILD_TYPE="$(tr '[:lower:]' '[:upper:]' <<< ${BuildType:0:1})${BuildType:1}"
+export PROJECT='ImageProcessor'
 export APP_VERSION="${BuildVersion:-1.0.0}"
 export BUILD_DIR="${SHELL_DIR}/../${PROJECT}${BUILD_TYPE}-${APP_VERSION}-Build"
 echo "BUILD_DIR='${BUILD_DIR}'"
@@ -61,5 +61,5 @@ echo "BUILD_DIR='${BUILD_DIR}'"
 rm -rf "${BUILD_DIR}" \
 && mkdir "${BUILD_DIR}" \
 && cd "${BUILD_DIR}" \
-&& cmake "${SHELL_DIR}" -G"${GPARAM}" \
+&& cmake -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -G"${GPARAM}" "${SHELL_DIR}" \
 && ${COMMANDS}
