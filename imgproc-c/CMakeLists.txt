@@ -111,17 +111,13 @@ pkg_search_module(GLEW REQUIRED glew glew2 libglew)
 message("GLEW: FROM PKG_CONFIG_FOUND=${PKG_CONFIG_FOUND}")
 pkg_search_module(GLFW REQUIRED glfw glfw3 libglfw)
 message("GLFW: FROM PKG_CONFIG_FOUND=${PKG_CONFIG_FOUND}")
-pkg_search_module(FREEGLUT REQUIRED freeglut freeglut3 libfreeglut)
-if (${GLEW_FOUND} AND ${GLFW_FOUND} AND ${FREEGLUT_FOUND})
-    link_directories(${GLEW_LIBDIR} ${GLFW_LIBDIR} ${FREEGLUT_LIBDIR})
+if (${GLEW_FOUND} AND ${GLFW_FOUND})
+    link_directories(${GLEW_LIBDIR} ${GLFW_LIBDIR})
 endif ()
-message("FREEGLUT: FROM PKG_CONFIG_FOUND=${PKG_CONFIG_FOUND}")
 message("GLEW_INCLUDEDIR=${GLEW_INCLUDEDIR}")
 message("GLFW_INCLUDEDIR=${GLFW_INCLUDEDIR}")
-message("FREEGLUT_INCLUDEDIR=${FREEGLUT_INCLUDEDIR}")
 message("GLEW_LIBDIR=${GLEW_LIBDIR}")
 message("GLFW_LIBDIR=${GLFW_LIBDIR}")
-message("FREEGLUT_LIBDIR=${FREEGLUT_LIBDIR}")
 message("")
 #end global settings
 
@@ -139,7 +135,7 @@ message("NOTICE: module imgproc will be build")
 #end imgproc
 
 #begin glbox
-if (${GLEW_FOUND} AND ${GLFW_FOUND} AND ${FREEGLUT_FOUND})
+if (${GLEW_FOUND} AND ${GLFW_FOUND})
     if(APPLE)
         set(PLAT_SUBDIR macosx)
     elseif(UNIX)
@@ -159,10 +155,10 @@ if (${GLEW_FOUND} AND ${GLFW_FOUND} AND ${FREEGLUT_FOUND})
             src/main/cpp/glbox/SimpleGpuProc_jni.c)
 
     target_include_directories(glbox PRIVATE
-            ${GLEW_INCLUDEDIR} ${GLFW_INCLUDEDIR} ${FREEGLUT_INCLUDEDIR}
+            ${GLEW_INCLUDEDIR} ${GLFW_INCLUDEDIR}
             ${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
-    set(GLLIB_DEPENDENCIES ${GLEW_LIBRARIES} ${GLFW_LIBRARIES} ${FREEGLUT_LIBRARIES})
-    target_link_libraries(glbox ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${GLLIB_DEPENDENCIES})
+    target_link_libraries(glbox ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY}
+            ${GLEW_LIBRARIES} ${GLFW_LIBRARIES})
 
     list(APPEND lib_targets glbox)
     message("NOTICE: module glbox will also be build")
@@ -201,16 +197,12 @@ if (NOT HAVE_WEBP_H)
 endif ()
 message("HAVE_WEBP_H=${HAVE_WEBP_H}")
 
-# png16
 check_library_exists(png "png_image_begin_read_from_file;png_image_write_to_file" "" HAVE_PNG_LIB)
 message("HAVE_PNG_LIB=${HAVE_PNG_LIB}")
-# jpeg9
 check_library_exists(jpeg "jpeg_start_compress;jpeg_start_decompress" "" HAVE_JPEG_LIB)
 message("HAVE_JPEG_LIB=${HAVE_JPEG_LIB}")
-# gif7
 check_library_exists(gif "EGifOpenFileName;DGifOpenFileName" "" HAVE_GIF_LIB)
 message("HAVE_GIF_LIB=${HAVE_GIF_LIB}")
-# webp040
 check_library_exists(webp "WebPEncode" "" HAVE_WEBP_LIB)
 message("HAVE_WEBP_LIB=${HAVE_WEBP_LIB}")
 

@@ -333,17 +333,6 @@ void glbox_save_pixels_ppm3(GLBox *box, const char *ppm_file_path) {
     glbox_util_save_pixels_ppm3(ppm_file_path, box->viewport_width, box->viewport_height);
 }
 
-int glbox_display_by_freeglut(int argc, char **argv, int width, int height, const char *title,
-                              void (*display)(void)) {
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-    glutInitWindowSize(width, height);
-    glutCreateWindow(title);
-    glutDisplayFunc(display);
-    glutMainLoop();
-    return 0;
-}
-
 void glbox_prepare_display(GLclampf r, GLclampf g, GLclampf b) {
     glClearColor(r, g, b, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

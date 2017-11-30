@@ -63,8 +63,6 @@
 #include <GL3/gl3ext.h>
 #endif
 
-
-#include <GL/freeglut.h>
 #include <GLFW/glfw3.h>
 
 // Base Structure
@@ -136,9 +134,6 @@ void glbox_util_attribute_3f(GLuint program, const GLchar *vertex_attrib_name,
 void glbox_util_draw_pixels(const void *pixels, GLsizei width, GLsizei height);
 void glbox_util_save_pixels_ppm3(const char *ppm_file_path, GLsizei width, GLsizei height);
 void glbox_save_pixels_ppm3(GLBox *box, const char *ppm_file_path);
-
-int glbox_display_by_freeglut(int argc, char **argv, int width, int height, const char *title,
-                              void (*display)(void));
 
 void glbox_prepare_display(GLclampf r, GLclampf g, GLclampf b);
 
