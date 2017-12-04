@@ -3,7 +3,7 @@
 GPARAM='Unix Makefiles'
 COMMANDS='make'
 
-function print_usage()
+function print_usage
 {
    cat << HEREDOC
 
