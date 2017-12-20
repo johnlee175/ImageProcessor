@@ -29,7 +29,7 @@ java ^
 -Xmx2048M -Xms1024M ^
 -Dfile.encoding="UTF-8" ^
 -Djava.library.path="jniLibs" ^
--classpath "imgproc-1.0.0.jar;libs/*" ^
+-classpath "ImageProcessor-1.0.0.jar;libs/*" ^
 -Dsun.java2d.opengl=true ^
 -splash:"splash.png" ^
 com.johnsoft.MainLauncher

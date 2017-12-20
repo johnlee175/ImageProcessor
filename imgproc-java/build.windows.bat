@@ -11,7 +11,7 @@ if exist %BUILD_INFO% (
      exit /b 1
 )
 
-set PROJECT=imgproc
+set PROJECT=ImageProcessor
 set BUILD_TYPE=%BuildType%
 set APP_VERSION=%BuildVersion%
 

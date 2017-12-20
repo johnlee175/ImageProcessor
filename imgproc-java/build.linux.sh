@@ -14,7 +14,7 @@ if [ $? -eq 0 ]; then
     fi
 
     BuildType="${BuildType:-debug}"
-    export PROJECT='imgproc'
+    export PROJECT='ImageProcessor'
     export BUILD_TYPE="$(tr '[:lower:]' '[:upper:]' <<< ${BuildType:0:1})${BuildType:1}"
     export APP_VERSION="${BuildVersion:-1.0.0}"
 

@@ -25,7 +25,7 @@ import java.util.Map;
  */
 public class SimpleGpuProc {
     static {
-        System.loadLibrary("glbox");
+        System.loadLibrary("glbox-1.0.0");
     }
 
     private long nativeContextPointer;
