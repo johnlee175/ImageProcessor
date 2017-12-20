@@ -146,7 +146,7 @@ int glbox2_gen_vao_bind_attrib(GLuint program, GLuint *out_vao, GLuint *out_vbo,
     GLuint loc_attr;
     GLenum code;
 
-    glGenVertexArrays(1, &vao); CHECK_ERROR(code);
+    glGenVertexArrays(1, &vao); CHECK_ERROR(code); /* TODO failed in linux */
     glGenBuffers(1, &vbo); CHECK_ERROR(code);
     glGenBuffers(1, &ibo); CHECK_ERROR(code);
 

@@ -49,6 +49,7 @@
 #include <GL/gl.h>
 #include <GL/glext.h>
 #include <GL/glx.h>
+#include <GL/glxext.h>
 #endif /* is_macosx_os */
 
 #if defined(GL_ES_VERSION_2_0)

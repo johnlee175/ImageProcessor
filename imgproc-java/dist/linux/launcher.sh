@@ -40,6 +40,9 @@ com.johnsoft.MainLauncher
 # 3. 'gdb/lldb -p pid' or Attach to local process with Clion;
 # 4. break point on jni code call;
 
+# In Linux (Ubuntu) issue:
+# Error: ptrace: Operation not permitted
+# We should execute command: sudo su - && echo 0 > /proc/sys/kernel/yama/ptrace_scope
 
 # jdb command usages: [you can type help]
 # use <path-to-src/main/java>

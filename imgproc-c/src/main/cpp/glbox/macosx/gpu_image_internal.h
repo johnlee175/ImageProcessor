@@ -76,8 +76,9 @@ static int prepare_off_screen_context(GlboxContext *g_context, GCreateFlags *fla
     const GLubyte *version = glGetString(GL_VERSION);
     const GLubyte *vendor = glGetString(GL_VENDOR);
     const GLubyte *renderer = glGetString(GL_RENDERER);
-    base_info_log("GPU Image Internal: version: '%s'; vendor: '%s'; renderer: '%s'\n",
-                  version, vendor, renderer);
+    const GLubyte *shader_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    base_info_log("GPU Image Internal: version: '%s'; vendor: '%s'; renderer: '%s'; shader-version: '%s'\n",
+                  version, vendor, renderer, shader_version);
     g_context->native_context->context_obj = context;
     return 0;
 }

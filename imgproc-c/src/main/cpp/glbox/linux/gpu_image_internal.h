@@ -35,6 +35,8 @@ struct tagInternalGContext {
     GLXPbuffer glx_pbuffer;
 };
 
+typedef GLXContext (*glXCreateContextAttribsARBProc)(Display*, GLXFBConfig, GLXContext, Bool, const int*);
+
 static int prepare_off_screen_context(GlboxContext *g_context, GCreateFlags *flag) {
     if (!g_context || !g_context->native_context) {
         base_error_log("pass a GlboxContext pointer to NULL or its native_context is NULL\n");
@@ -46,6 +48,9 @@ static int prepare_off_screen_context(GlboxContext *g_context, GCreateFlags *fla
         base_error_log("call XOpenDisplay failed\n");
         return -1;
     }
+
+    const char *extensions = glXQueryExtensionsString(display, DefaultScreen(display));
+    printf("glXQueryExtensionsString: %s\n", extensions);
 
     int nitems = 0;
     const int config_attrs[] = {
@@ -60,7 +65,7 @@ static int prepare_off_screen_context(GlboxContext *g_context, GCreateFlags *fla
             GLX_STENCIL_SIZE, 8,
             GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT,
             GLX_RENDER_TYPE, GLX_RGBA_BIT,
-            GLX_NONE
+            None
     };
     GLXFBConfig *configs = glXChooseFBConfig(display, DefaultScreen(display), config_attrs, &nitems);
     if (!configs || nitems <= 0) {
@@ -92,31 +97,60 @@ static int prepare_off_screen_context(GlboxContext *g_context, GCreateFlags *fla
             GLX_PBUFFER_WIDTH, SURFACE_WIDTH,
             GLX_PBUFFER_HEIGHT, SURFACE_HEIGHT,
             GLX_LARGEST_PBUFFER, False,
-            GLX_NONE
+            None
     };
     GLXPbuffer pbuffer = glXCreatePbuffer(display, config, pbuffer_attrs);
+
+    // Create an oldstyle context first, to get the correct function pointer for glXCreateContextAttribsARB
     GLXContext context = glXCreateNewContext(display, config, GLX_RGBA_TYPE, NULL, True);
-    if (context) {
+    if (!context) {
         base_error_log("call glXCreateNewContext failed\n");
         return -1;
     }
+
+    glXCreateContextAttribsARBProc glXCreateContextAttribsARB =
+            (glXCreateContextAttribsARBProc) glXGetProcAddress((const GLubyte*)"glXCreateContextAttribsARB");
+    glXMakeCurrent(display, 0, 0);
+    glXDestroyContext(display, context);
+    if (!glXCreateContextAttribsARB) {
+        base_error_log("glXCreateContextAttribsARB entry point not found. Aborting.\n");
+        return -1;
+    }
+
+    const int context_attrs[] = {
+            GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
+            GLX_CONTEXT_MINOR_VERSION_ARB, 3,
+            GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+            None
+    };
+    context = glXCreateContextAttribsARB(display, config, NULL, True, context_attrs);
+    if (!context) {
+        base_error_log("call glXCreateContextAttribsARB failed, "
+                               "Make sure glXQueryExtensionsString has GLX_ARB_create_context\n");
+        return -1;
+    }
+
     if (glXMakeCurrent(display, pbuffer, context) == False) {
         base_error_log("call glXMakeCurrent failed\n");
         return -1;
     }
 
     XFree(configs);
+    XSync(display, False);
 
     glewExperimental = GL_TRUE;
     if (glewInit()) {
         base_error_log("call glewInit failed\n");
         return -1;
     }
+
+    base_info_log("glXIsDirect: %d\n", glXIsDirect(display, context));
     const GLubyte *version = glGetString(GL_VERSION);
     const GLubyte *vendor = glGetString(GL_VENDOR);
     const GLubyte *renderer = glGetString(GL_RENDERER);
-    base_info_log("GPU Image Internal: version: '%s'; vendor: '%s'; renderer: '%s'\n",
-                  version, vendor, renderer);
+    const GLubyte *shader_version = glGetString(GL_SHADING_LANGUAGE_VERSION);
+    base_info_log("GPU Image Internal: version: '%s'; vendor: '%s'; renderer: '%s'; shader-version: '%s'\n",
+                  version, vendor, renderer, shader_version);
     g_context->native_context->x_display = display;
     g_context->native_context->glx_context = context;
     g_context->native_context->glx_pbuffer = pbuffer;
