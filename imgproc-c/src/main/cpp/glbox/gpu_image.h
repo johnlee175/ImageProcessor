@@ -45,7 +45,7 @@
 #elif defined(is_linux_os)
 #define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #define GLEW_STATIC
-#include <glew.h>
+#include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glext.h>
 #include <GL/glx.h>

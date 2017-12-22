@@ -86,6 +86,7 @@ message("JAVA_INCLUDE_PATH=${JAVA_INCLUDE_PATH}")
 message("JAVA_INCLUDE_PATH2=${JAVA_INCLUDE_PATH2}")
 message("")
 
+# On Ubuntu, Maybe need like: sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev libgl1-mesa-glx
 find_package(OpenGL REQUIRED)
 if (NOT ${OPENGL_FOUND})
     message(FATAL_ERROR "OpenGL NOT FOUND")

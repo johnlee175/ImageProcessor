@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+SYS_DESC=`uname -a`
+if [[ ${SYS_DESC} == *Ubuntu* ]]; then
+    echo "we are on Ubuntu"
+    echo "sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev libgl1-mesa-glx"
+    sudo apt-get install libgl1-mesa-dev libglu1-mesa-dev libgl1-mesa-glx
+    echo "sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev"
+    sudo apt-get install libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+elif [[ ${SYS_DESC} == *Darwin* ]]; then
+    echo "we are on Mac OS X"
+fi
+
 cd ../c-deps
 CURR_DIR=`pwd`
 echo "we are in `pwd`"
@@ -83,4 +94,5 @@ build_with_cmake "glew-2.1.0" "" "../build/cmake/"
 
 build_with_cmake "glfw-3.2.1"
 
-echo "All build is successful!"
+echo "All build is successful! Please add the following line to ~/.bashrc:
+export PKG_CONFIG_PATH=\""${INSTALL_DIR}/lib/pkgconfig"\":\"\${PKG_CONFIG_PATH}\""
