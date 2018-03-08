@@ -285,3 +285,6 @@ foreach(current_target ${lib_targets})
     message("")
 endforeach()
 #end each item settings
+
+#test rgb_yuv
+add_executable(rgb_yuv src/main/cpp/rgb_yuv.c)
